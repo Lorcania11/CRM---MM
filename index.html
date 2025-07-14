@@ -1401,30 +1401,48 @@
                 try {
                     this.state.excelIntegration.isLoading = true;
                     this.render();
-
-                    const response = await fetch('https://graph.microsoft.com/v1.0/me/drive/root/search(q=\'.xlsx\')', {
-                        headers: {
-                            'Authorization': `Bearer ${this.state.excelIntegration.accessToken}`
-                        }
-                    });
-
-                    if (!response.ok) throw new Error('Failed to fetch files');
-
-                    const data = await response.json();
-                    this.state.excelIntegration.excelFiles = data.value.filter(file =>
+            
+                    const headers = {
+                        'Authorization': `Bearer ${this.state.excelIntegration.accessToken}`
+                    };
+            
+                    // Step 1: Confirm OneDrive exists
+                    const driveResp = await fetch('https://graph.microsoft.com/v1.0/me/drive', { headers });
+                    if (!driveResp.ok) {
+                        throw new Error('OneDrive is not provisioned for this user.');
+                    }
+            
+                    // Step 2: Try searching for Excel files
+                    const searchResp = await fetch("https://graph.microsoft.com/v1.0/me/drive/root/search(q='.xlsx')", { headers });
+            
+                    let files = [];
+            
+                    if (searchResp.status === 404) {
+                        console.warn("Search returned 404, falling back to children...");
+                        const childrenResp = await fetch("https://graph.microsoft.com/v1.0/me/drive/root/children", { headers });
+                        if (!childrenResp.ok) throw new Error("Could not list OneDrive root contents.");
+                        const childrenData = await childrenResp.json();
+                        files = childrenData.value;
+                    } else if (searchResp.ok) {
+                        const searchData = await searchResp.json();
+                        files = searchData.value;
+                    } else {
+                        const errText = await searchResp.text();
+                        throw new Error(`Search failed: ${errText}`);
+                    }
+            
+                    this.state.excelIntegration.excelFiles = files.filter(file =>
                         file.name.endsWith('.xlsx') || file.name.endsWith('.xls')
-                    );
+            );
 
-                    this.state.excelIntegration.isLoading = false;
-                    this.render();
-
-                } catch (error) {
-                    console.error('Error fetching Excel files:', error);
-                    this.state.excelIntegration.error = error.message;
-                    this.state.excelIntegration.isLoading = false;
-                    this.render();
-                }
-            }
+    } catch (error) {
+        console.error('❌ Error fetching Excel files:', error);
+        this.state.excelIntegration.error = error.message;
+    } finally {
+        this.state.excelIntegration.isLoading = false;
+        this.render();
+    }
+}
 
             async openExcelFile(fileId) {
                 try {
