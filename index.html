@@ -16,7 +16,8 @@
             https://www.googleapis.com/
             https://securetoken.googleapis.com/
             https://www.google.com/
-            https://www.googletagmanager.com/;
+            https://www.googletagmanager.com/
+            https://alcdn.msauth.net/;
         connect-src 'self'
             https://*.googleapis.com
             https://*.google.com
@@ -29,7 +30,8 @@
             https://api.commoditic.com/
             https://commodities-api.com/
             https://api.apitube.io/
-            https://api.stlouisfed.org/;
+            https://api.stlouisfed.org/
+            https://login.microsoftonline.com;
         frame-src 
             https://accounts.google.com/ 
             https://apis.google.com/
@@ -240,6 +242,7 @@
     <script src="https://alcdn.msauth.net/browser/2.30.0/js/msal-browser.min.js"></script>
 
     <script>
+        console.log("📜 SCRIPT BLOCK EXECUTED");
         // Firebase configuration
         const FIREBASE_CONFIG = {
             apiKey: "AIzaSyCKIKzPH6ibixe7rnq0em4AAsdq5b10WDA",
@@ -260,17 +263,29 @@
         };
         const MICROSOFT_CONFIG = {
             // Azure App Configuration - Using your provided credentials
-            clientId: '1e620e1b-c6dc-4e6c-b0fd-b403d1e008df', // Your Azure Client ID
-            tenantId: 'common', // Using 'common' for multi-tenant (works with personal and work accounts)
-            redirectUri: 'https://lorcania11.github.io/CRM---MM/', // Your CRM URL
+            clientId: '1e620e1b-c6dc-4e6c-b0fd-b403d1e008df',
+            tenantId: 'f700d315-223c-4939-a49a-1ebef89110f6',
+            redirectUri: 'https://lorcania11.github.io/CRM---MM/',
             scopes: [
             'User.Read',
-            'Files.ReadWrite',
-            'Files.ReadWrite.All',
+            //'Files.ReadWrite',
+            'User.ReadWrite',
             'Sites.ReadWrite.All'
             ]
         };
-
+        const msalConfig = {
+            auth: {
+                clientId: "1e620e1b-c6dc-4e6c-b0fd-b403d1e008df",
+                authority: "https://login.microsoftonline.com/f700d315-223c-4939-a49a-1ebef89110f6",
+                redirectUri: "https://lorcania11.github.io/CRM---MM/",
+                knownAuthorities: ["login.microsoftonline.com"] 
+            },
+            cache: {
+                cacheLocation: "localStorage",
+                storeAuthStateInCookie: false
+            }
+        };
+        const msalInstance = new msal.PublicClientApplication(msalConfig);
         // Market Intelligence API Configuration
         const MARKET_INTELLIGENCE_CONFIG = {
             // Primary steel pricing API - Using free tier Commoditic API
@@ -351,7 +366,8 @@
             constructor() {
                 this.tokenClient = null;
                 this.accessToken = null;
-                
+                this.msalInstance = null;
+                this.msalReady = false; // ✅ Add this line
                 this.state = {
                     activeView: 'dashboard',
                     customers: [],
@@ -456,18 +472,30 @@
                     { id: 'won', name: 'Won', color: 'bg-green-500' },
                     { id: 'lost', name: 'Lost', color: 'bg-red-500' }
                 ];
-
+                console.log("🚀 Running constructor");
                 this.init();
             }
 
             async init() {
+                console.log("🚨 INIT STARTED");
+
                 this.loadFromLocalStorage();
                 await this.setupFirebase();
                 this.setupEventListeners();
                 await this.initGoogleCalendar();
                 this.setupMarketIntelligenceRefresh();
-                await this.initMicrosoftAuth();
+
+                await this.initMicrosoftAuth(); // ✅ One call only
+
                 this.render();
+
+                const btn = document.getElementById("connectMicrosoftBtn");
+                if (btn) {
+                    console.log("✅ Binding connectMicrosoftBtn");
+                    btn.addEventListener("click", this.connectToMicrosoft.bind(this));
+                } else {
+                    console.warn("❌ Connect button not found in DOM");
+                }
             }
 
             setupEventListeners() {
@@ -497,11 +525,11 @@
                         await this.loadScript('https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js');
 
                         if (window.firebase) {
-    window.firebase.initializeApp(FIREBASE_CONFIG);
-    this.state.firebaseDb = window.firebase.database();
-    this.state.firebaseStorage = window.firebase.storage();
-    this.state.firebaseAuth = window.firebase.auth();
-    
+                            window.firebase.initializeApp(FIREBASE_CONFIG);
+                            this.state.firebaseDb = window.firebase.database();
+                            this.state.firebaseStorage = window.firebase.storage();
+                            this.state.firebaseAuth = window.firebase.auth();
+                            
     // Enable anonymous authentication by default
     window.firebase.auth().onAuthStateChanged(async (user) => {
         if (!user) {
@@ -1272,59 +1300,58 @@
             }
 
             async initMicrosoftAuth() {
+                console.log("🟣 Inside initMicrosoftAuth");
+
                 try {
-                    // Initialize MSAL
-                    this.msalConfig = {
+                    this.msalInstance = new msal.PublicClientApplication({
                         auth: {
                             clientId: MICROSOFT_CONFIG.clientId,
                             authority: `https://login.microsoftonline.com/${MICROSOFT_CONFIG.tenantId}`,
-                            redirectUri: MICROSOFT_CONFIG.redirectUri,
-                        },
-                        cache: {
-                            cacheLocation: "localStorage",
-                            storeAuthStateInCookie: false,
+                            redirectUri: MICROSOFT_CONFIG.redirectUri
                         }
-                    };
+                    });
 
-                    this.msalInstance = new msal.PublicClientApplication(this.msalConfig);
-
-                    // Check if user is already logged in
-                    const accounts = this.msalInstance.getAllAccounts();
-                    if (accounts.length > 0) {
-                        this.state.excelIntegration.isConnected = true;
-                        await this.refreshMicrosoftToken();
-                    }
-                } catch (error) {
-                    console.error('Error initializing Microsoft auth:', error);
+                    console.log("✅ msalInstance initialized:", this.msalInstance);
+                    this.msalReady = true;
+                } catch (e) {
+                    console.error("❌ initMicrosoftAuth error:", e);
                 }
             }
 
             async connectToMicrosoft() {
-                try {
-                    const loginRequest = {
-                        scopes: MICROSOFT_CONFIG.scopes
-                    };
+                console.log(this)
+                console.log("🟢 Clicked connectToMicrosoft");
+                if (!this.msalReady || !this.msalInstance) {
+                    console.warn("⛔️ connectToMicrosoft blocked: MSAL not ready");
+                    alert("Please wait until Microsoft authentication is ready.");
+                    return;
+                }
+                console.log("🔍 MSAL config in use:", JSON.stringify(this.msalInstance.getConfiguration(), null, 2));
 
+                try {
+                    const loginRequest = { scopes: MICROSOFT_CONFIG.scopes };
                     const loginResponse = await this.msalInstance.loginPopup(loginRequest);
+
                     this.state.excelIntegration.accessToken = loginResponse.accessToken;
                     this.state.excelIntegration.isConnected = true;
+                    localStorage.setItem("microsoftConnected", "true");
 
-                    // Store connection state
-                    localStorage.setItem('microsoftConnected', 'true');
-
-                    this.render();
-
-                    // Fetch available Excel files
+                    this.render(); // Optional: Re-render UI if needed
                     await this.fetchExcelFiles();
-
                 } catch (error) {
-                    console.error('Login failed:', error);
-                    alert('Failed to connect to Microsoft. Please try again.');
+                    console.error("Login failed:", error);
+                    alert("Failed to connect to Microsoft.");
                 }
             }
 
-            async refreshMicrosoftToken() {
+            refreshMicrosoftToken = async () => {
+                console.log("refreshMicrosoftToken: this =", this);
                 try {
+                    if (!this.msalInstance) {
+                        console.error("MSAL instance is not initialized.");
+                        return;
+                    }
+
                     const accounts = this.msalInstance.getAllAccounts();
                     if (accounts.length === 0) return;
 
@@ -1338,10 +1365,9 @@
 
                 } catch (error) {
                     console.error('Token refresh failed:', error);
-                    // Fall back to interactive login
                     await this.connectToMicrosoft();
                 }
-            }
+            };
 
             async disconnectFromMicrosoft() {
                 const accounts = this.msalInstance.getAllAccounts();
@@ -1736,11 +1762,7 @@
                                         Disconnect
                                     </button>
                                 ` : `
-                                    <button onclick="app.connectToMicrosoft()"
-                                            class="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                                        ${this.icon('Cloud', 20)}
-                                        <span>Connect to OneDrive</span>
-                                    </button>
+                                    
                                 `}
                                 <button onclick="app.setView('dashboard')"
                                         class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
@@ -1760,7 +1782,7 @@
                                         Access and edit your Excel files directly from your CRM. 
                                         Sync customer data, track inventory, and manage reports all in one place.
                                     </p>
-                                    <button onclick="app.connectToMicrosoft()"
+                                    <button id="connectMicrosoftBtn"
                                             class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 text-lg">
                                         Connect to OneDrive
                                     </button>
@@ -3759,6 +3781,11 @@ if (!window.firebase.auth().currentUser) {
                         ${this.renderModals()}
                     </div>
                 `;
+                    const btn = document.getElementById("connectMicrosoftBtn");
+                    if (btn) {
+                        btn.addEventListener("click", this.connectToMicrosoft.bind(this));
+                    }
+                
             }
 
             renderActiveView() {
