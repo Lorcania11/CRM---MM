@@ -1403,46 +1403,50 @@
                     this.render();
             
                     const headers = {
-                        'Authorization': `Bearer ${this.state.excelIntegration.accessToken}`
+                        Authorization: `Bearer ${this.state.excelIntegration.accessToken}`
                     };
             
-                    // Step 1: Confirm OneDrive exists
+                    // Step 1: Ensure OneDrive is provisioned
                     const driveResp = await fetch('https://graph.microsoft.com/v1.0/me/drive', { headers });
-                    if (!driveResp.ok) {
-                        throw new Error('OneDrive is not provisioned for this user.');
-                    }
-            
-                    // Step 2: Try searching for Excel files
-                    const searchResp = await fetch("https://graph.microsoft.com/v1.0/me/drive/root/search(q='.xlsx')", { headers });
+                    if (!driveResp.ok) throw new Error('OneDrive is not provisioned for this user.');
             
                     let files = [];
             
-                    if (searchResp.status === 404) {
-                        console.warn("Search returned 404, falling back to children...");
-                        const childrenResp = await fetch("https://graph.microsoft.com/v1.0/me/drive/root/children", { headers });
-                        if (!childrenResp.ok) throw new Error("Could not list OneDrive root contents.");
-                        const childrenData = await childrenResp.json();
-                        files = childrenData.value;
-                    } else if (searchResp.ok) {
+                    // Step 2: Try search API first
+                    const searchResp = await fetch("https://graph.microsoft.com/v1.0/me/drive/root/search(q='.xlsx')", { headers });
+            
+                    if (searchResp.ok) {
                         const searchData = await searchResp.json();
                         files = searchData.value;
+                    } else if (searchResp.status === 404) {
+                        console.warn("Search API returned 404. Falling back to children API...");
+            
+                        const childrenResp = await fetch("https://graph.microsoft.com/v1.0/me/drive/root/children", { headers });
+                        if (!childrenResp.ok) {
+                            const errorText = await childrenResp.text();
+                            throw new Error(`Fallback failed: ${errorText}`);
+                        }
+            
+                        const childrenData = await childrenResp.json();
+                        files = childrenData.value;
                     } else {
-                        const errText = await searchResp.text();
-                        throw new Error(`Search failed: ${errText}`);
+                        const errorText = await searchResp.text();
+                        throw new Error(`Search failed: ${errorText}`);
                     }
             
+                    // Step 3: Filter Excel files
                     this.state.excelIntegration.excelFiles = files.filter(file =>
                         file.name.endsWith('.xlsx') || file.name.endsWith('.xls')
-            );
-
-    } catch (error) {
-        console.error('❌ Error fetching Excel files:', error);
-        this.state.excelIntegration.error = error.message;
-    } finally {
-        this.state.excelIntegration.isLoading = false;
-        this.render();
-    }
-}
+                    );
+            
+                } catch (error) {
+                    console.error('❌ Error fetching Excel files:', error);
+                    this.state.excelIntegration.error = error.message;
+                } finally {
+                    this.state.excelIntegration.isLoading = false;
+                    this.render();
+                }
+            }
 
             async openExcelFile(fileId) {
                 try {
