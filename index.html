@@ -497,7 +497,7 @@
             async init() {
                 console.log("🚨 INIT STARTED");
 
-                this.loadFromLocalStorage();
+                this.loadFromFirebase();
                 await this.setupFirebase();
                 this.setupEventListeners();
                 await this.initGoogleCalendar();
@@ -1758,7 +1758,7 @@
 
                     if (confirm(`Import ${importedCustomers.length} customers from Excel?`)) {
                         this.state.customers.push(...importedCustomers);
-                        this.saveAllToLocalStorage();
+                        this.saveAllToFirebase();
 
                         if (this.state.firebaseDb && this.state.isOnline) {
                             for (const customer of importedCustomers) {
@@ -2402,7 +2402,11 @@
                             activity.meetingLink = response.result.conferenceData.entryPoints[0].uri;
                         }
 
+<<<<<<< HEAD
                         this.saveAllToLocalStorage();
+=======
+                        this.saveAllToFirebase();
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                         if (this.state.firebaseDb && this.state.isOnline) {
                             await this.state.firebaseDb.ref(`activities/${activity.id}`).set(activity);
@@ -2448,150 +2452,250 @@
                 return `${hours.toString().padStart(2, '0')}:${minutes}`;
             }
 
-            loadFromLocalStorage() {
+            // 🔥 REPLACE YOUR METHODS WITH THESE CORRECTED VERSIONS:
+            // ✅ CORRECTED loadFromFirebase() - Actually loads from Firebase, not localStorage!
+            async loadFromFirebase() {
                 try {
-                    const customers = JSON.parse(localStorage.getItem('customers') || '[]');
-                    const opportunities = JSON.parse(localStorage.getItem('opportunities') || '[]');
-                    const quotes = JSON.parse(localStorage.getItem('quotes') || '[]');
-                    const activities = JSON.parse(localStorage.getItem('activities') || '[]');
+                    console.log('🔄 Loading data from Firebase...');
+                    
+                    // Check Firebase configuration
+                    if (!this.state.firebaseDb || !this.state.isFirebaseConfigured) {
+                        console.log('❌ Firebase not configured');
+                        this.initializeSampleData();
+                        return;
+                    }
+
+                    // Ensure Firebase authentication
+                    await this.ensureFirebaseAuth();
+
+                    this.state.isSyncing = true;
+                    if (this.render) this.render();
+
+                    // 🔥 LOAD FROM FIREBASE, NOT LOCALSTORAGE!
+                    const [customersSnapshot, opportunitiesSnapshot, quotesSnapshot, activitiesSnapshot] = await Promise.all([
+                        this.state.firebaseDb.ref('customers').once('value'),
+                        this.state.firebaseDb.ref('opportunities').once('value'),
+                        this.state.firebaseDb.ref('quotes').once('value'),
+                        this.state.firebaseDb.ref('activities').once('value')
+                    ]);
+
+                    // Convert Firebase data to arrays
+                    const customers = this.convertFirebaseToArray(customersSnapshot.val()) || [];
+                    const opportunities = this.convertFirebaseToArray(opportunitiesSnapshot.val()) || [];
+                    const quotes = this.convertFirebaseToArray(quotesSnapshot.val()) || [];
+                    const activities = this.convertFirebaseToArray(activitiesSnapshot.val()) || [];
+
+                    console.log('📊 Loaded from Firebase:', {
+                        customers: customers.length,
+                        opportunities: opportunities.length,
+                        quotes: quotes.length,
+                        activities: activities.length
+                    });
 
                     // Migrate existing customers to new contact structure if needed
-                    customers.forEach(customer => {
+                    let migrationCount = 0;
+                    const migratedCustomers = customers.map(customer => {
                         if (customer.contact && !customer.contacts) {
-                            customer.contacts = [{
-                                name: customer.contact,
-                                email: customer.email,
-                                cell: customer.phone,
-                                title: ''
-                            }];
-                            // Keep old fields for backward compatibility temporarily
+                            migrationCount++;
+                            const migratedCustomer = {
+                                ...customer,
+                                contacts: [{
+                                    name: customer.contact,
+                                    email: customer.email,
+                                    cell: customer.phone,
+                                    title: ''
+                                }],
+                                updatedAt: new Date().toISOString()
+                            };
+                            
+                            // Save migrated customer back to Firebase
+                            this.state.firebaseDb.ref(`customers/${customer.id}`).set(migratedCustomer);
+                            return migratedCustomer;
+                        }
+                        return customer;
+                    });
+
+                    if (migrationCount > 0) {
+                        console.log(`✅ Migrated ${migrationCount} customers`);
+                    }
+
+                    // 🔥 UPDATE STATE WITH FIREBASE DATA
+                    this.state.customers = migratedCustomers;
+                    this.state.opportunities = opportunities;
+                    this.state.quotes = quotes;
+                    this.state.activities = activities;
+
+                    // Initialize sample data if nothing exists
+                    const hasData = customers.length > 0 || opportunities.length > 0 || activities.length > 0;
+                    if (!hasData) {
+                        console.log('🌱 No data found, initializing sample data');
+                        await this.initializeSampleDataToFirebase();
+                    }
+
+                    this.state.lastSync = new Date().toISOString();
+                    this.state.isSyncing = false;
+                    
+                    console.log('✅ Firebase loading completed');
+                    if (this.render) this.render();
+
+                } catch (error) {
+                    console.error('❌ Error loading from Firebase:', error);
+                    this.state.isSyncing = false;
+                    
+                    // Fallback to sample data
+                    this.initializeSampleData();
+                    if (this.render) this.render();
+                }
+            }
+
+            // ✅ CORRECTED saveAllToFirebase() - Proper async/await and object format
+            async saveAllToFirebase() {
+                if (!this.state.firebaseDb || !this.state.isOnline) {
+                    console.log('⚠️ Cannot save - Firebase not available');
+                    return false;
+                }
+
+                try {
+                    console.log('💾 Saving all data to Firebase...');
+                    this.state.isSyncing = true;
+                    if (this.render) this.render();
+
+                    // Convert arrays to Firebase object format (Firebase expects objects, not arrays)
+                    const customersObj = this.convertArrayToFirebaseObject(this.state.customers);
+                    const opportunitiesObj = this.convertArrayToFirebaseObject(this.state.opportunities);
+                    const quotesObj = this.convertArrayToFirebaseObject(this.state.quotes);
+                    const activitiesObj = this.convertArrayToFirebaseObject(this.state.activities);
+
+                    // 🔥 SAVE TO FIREBASE WITH PROPER AWAIT
+                    await Promise.all([
+                        this.state.firebaseDb.ref('customers').set(customersObj),
+                        this.state.firebaseDb.ref('opportunities').set(opportunitiesObj),
+                        this.state.firebaseDb.ref('quotes').set(quotesObj),
+                        this.state.firebaseDb.ref('activities').set(activitiesObj)
+                    ]);
+
+                    this.state.lastSync = new Date().toISOString();
+                    this.state.isSyncing = false;
+                    
+                    console.log('✅ All data saved to Firebase');
+                    if (this.render) this.render();
+                    return true;
+
+                } catch (error) {
+                    console.error('❌ Error saving to Firebase:', error);
+                    this.state.isSyncing = false;
+                    if (this.render) this.render();
+                    return false;
+                }
+            }
+
+            // 🔥 ADD THESE HELPER METHODS IF YOU DON'T HAVE THEM:
+
+            // Ensure Firebase authentication
+            async ensureFirebaseAuth() {
+                return new Promise((resolve, reject) => {
+                    const currentUser = window.firebase.auth().currentUser;
+                    if (currentUser) {
+                        resolve(currentUser);
+                        return;
+                    }
+
+                    const unsubscribe = window.firebase.auth().onAuthStateChanged(async (user) => {
+                        if (user) {
+                            console.log('✅ Firebase authenticated');
+                            unsubscribe();
+                            resolve(user);
+                        } else {
+                            try {
+                                console.log('🔑 Signing in anonymously...');
+                                const userCredential = await window.firebase.auth().signInAnonymously();
+                                unsubscribe();
+                                resolve(userCredential.user);
+                            } catch (authError) {
+                                console.error('❌ Auth failed:', authError);
+                                unsubscribe();
+                                reject(authError);
+                            }
                         }
                     });
 
-                    if (customers.length === 0 && opportunities.length === 0 && activities.length === 0) {
-                        // Initialize with sample data (updated structure)
-                        this.state.customers = [
-                            {
-                                id: '1',
-                                name: 'Apex Construction Inc.',
-                                industry: 'Metal Buildings',
-                                officeNumber: '(555) 100-2000',
-                                contacts: [
-                                    {
-                                        name: 'John Davidson',
-                                        email: 'john@apexconstruction.com',
-                                        cell: '(555) 123-4567',
-                                        title: 'Owner'
-                                    }
-                                ],
-                                // Keep legacy fields for backward compatibility
-                                contact: 'John Davidson',
-                                email: 'john@apexconstruction.com',
-                                phone: '(555) 123-4567',
-                                status: 'active',
-                                pipelineStage: 'quote_out',
-                                accountNotes: 'Leading construction company specializing in commercial metal buildings. Founded in 1995, serving the tri-state area.',
-                                productsUsed: 'Square tubing (2x2, 3x3), Round pipes (various diameters), Galvanized steel sheets',
-                                primaryProducts: ['Square Tubing - 2x2', 'Square Tubing - 3x3', 'Galvanized'],
-                                deliveryPreferences: 'Job site delivery required, 48-hour notice preferred',
-                                paymentTerms: 'Net 30, 2% discount for early payment',
-                                website: 'https://www.apexconstruction.com',
-                                linkedIn: 'https://linkedin.com/company/apex-construction-inc',
-                                decisionMakers: 'John Davidson (Owner), Sarah Miller (Procurement Manager), Mike Chen (Project Manager)',
-                                budgetCycles: 'Annual budget set in Q4, project-based purchasing throughout year',
-                                preferredContact: 'Phone',
-                                lastActivity: new Date().toISOString(),
-                                createdAt: new Date().toISOString(),
-                                updatedAt: new Date().toISOString()
-                            }
-                        ];
+                    // Timeout after 10 seconds
+                    setTimeout(() => {
+                        unsubscribe();
+                        reject(new Error('Auth timeout'));
+                    }, 10000);
+                });
+            }
 
-                        this.state.opportunities = [
-                            {
-                                id: '1',
-                                customerId: '1',
-                                title: 'Q1 2025 Bulk Order',
-                                value: 125000,
-                                stage: 'negotiation',
-                                salesRep: 'Kaleb Smith',
-                                expectedClose: '2025-03-31',
-                                createdAt: new Date().toISOString()
-                            }
-                        ];
+            // Convert Firebase object to array
+            convertFirebaseToArray(firebaseData) {
+                if (!firebaseData || typeof firebaseData !== 'object') {
+                    return [];
+                }
+                
+                return Object.entries(firebaseData).map(([id, data]) => ({
+                    ...data,
+                    id: id
+                }));
+            }
 
-                        this.state.activities = [
-                            {
-                                id: '1',
-                                customerId: '1',
-                                type: 'email',
-                                subject: 'Quote sent for Q1 order',
-                                date: new Date().toISOString().split('T')[0],
-                                time: '2:00 PM',
-                                notes: 'Sent detailed quote with volume pricing. Customer seemed interested in the bulk discount options.',
-                                completed: true,
-                                pipelineStage: 'quote_out',
-                                createdAt: new Date().toISOString()
-                            }
-                        ];
-
-                        this.state.quotes = [];
-                        this.saveAllToLocalStorage();
-                    } else {
-                        this.state.customers = customers;
-                        this.state.opportunities = opportunities;
-                        this.state.quotes = quotes;
-                        this.state.activities = activities;
+            // Convert array to Firebase object format
+            convertArrayToFirebaseObject(array) {
+                if (!Array.isArray(array)) return {};
+                
+                const obj = {};
+                array.forEach(item => {
+                    if (item.id) {
+                        obj[item.id] = item;
                     }
-                } catch (error) {
-                    console.error('Error loading from localStorage:', error);
-                }
+                });
+                return obj;
             }
 
-            saveAllToLocalStorage() {
-                try {
-                    localStorage.setItem('customers', JSON.stringify(this.state.customers));
-                    localStorage.setItem('opportunities', JSON.stringify(this.state.opportunities));
-                    localStorage.setItem('quotes', JSON.stringify(this.state.quotes));
-                    localStorage.setItem('activities', JSON.stringify(this.state.activities));
-                } catch (error) {
-                    console.error('Error saving to localStorage:', error);
-                }
-            }
-
+            // ✅ REPLACE setupFirebaseListeners WITH THIS VERSION:
             setupFirebaseListeners() {
                 const db = this.state.firebaseDb;
-                let isInitialLoad = true;
+                
+                console.log('🔗 Setting up Firebase real-time listeners...');
 
                 ['customers', 'opportunities', 'activities', 'quotes'].forEach(collection => {
                     db.ref(collection).on('value', (snapshot) => {
                         const data = snapshot.val();
-                        const localData = this.state[collection];
-
-                        if (!data && localData.length > 0 && isInitialLoad) {
-                            const dataObj = {};
-                            localData.forEach(item => {
-                                dataObj[item.id] = item;
-                            });
-                            db.ref(collection).set(dataObj);
-                            return;
-                        }
-
-                        if (data && !isInitialLoad) {
-                            const dataArray = Object.entries(data).map(([id, item]) => ({
-                                ...item,
-                                id: id
-                            }));
-                            this.state[collection] = dataArray;
-                            localStorage.setItem(collection, JSON.stringify(dataArray));
+                        
+                        if (data) {
+                            const dataArray = this.convertFirebaseToArray(data);
+                            
+                            // Only update if data actually changed
+                            if (JSON.stringify(this.state[collection]) !== JSON.stringify(dataArray)) {
+                                this.state[collection] = dataArray;
+                                console.log(`🔄 ${collection} updated from Firebase:`, dataArray.length);
+                                this.render();
+                            }
+                        } else {
+                            // Handle empty collection
+                            this.state[collection] = [];
+                            console.log(`🔄 ${collection} cleared (empty in Firebase)`);
                             this.render();
                         }
+                    }, (error) => {
+                        console.error(`❌ Firebase listener error for ${collection}:`, error);
                     });
                 });
 
-                setTimeout(() => {
-                    isInitialLoad = false;
-                    this.state.lastSync = new Date().toISOString();
-                }, 2000);
+                // Monitor Firebase connection status
+                db.ref('.info/connected').on('value', (snapshot) => {
+                    const connected = snapshot.val();
+                    this.state.isOnline = connected;
+                    console.log(`🌐 Firebase connection: ${connected ? 'online' : 'offline'}`);
+                    
+                    if (connected) {
+                        this.state.lastSync = new Date().toISOString();
+                    }
+                    
+                    this.render();
+                });
+
+                console.log('✅ Firebase real-time listeners set up');
             }
 
             // Icon components - Enhanced with Market Intelligence icons
@@ -2861,9 +2965,15 @@
                 this.render();
             }
 
+            // ✅ UPDATE YOUR BULK OPERATIONS - REPLACE localStorage WITH Firebase:
             async bulkUpdateStage(stage) {
                 const selectedIds = Array.from(this.state.selectedItems);
+<<<<<<< HEAD
 
+=======
+                
+                // Update local state
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
                 for (const id of selectedIds) {
                     const customer = this.state.customers.find(c => c.id === id);
                     if (customer) {
@@ -2872,6 +2982,7 @@
                     }
                 }
 
+<<<<<<< HEAD
                 this.saveAllToLocalStorage();
 
                 if (this.state.firebaseDb && this.state.isOnline) {
@@ -2882,6 +2993,15 @@
                         }
                     }
                 }
+=======
+                // Save all updated customers to Firebase
+                const savePromises = selectedIds.map(id => {
+                    const customer = this.state.customers.find(c => c.id === id);
+                    return customer ? this.saveToFirebase('customers', customer) : Promise.resolve();
+                });
+                
+                await Promise.all(savePromises);
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                 this.state.bulkMode = false;
                 this.state.selectedItems.clear();
@@ -2892,6 +3012,7 @@
                 if (!confirm(`Delete ${this.state.selectedItems.size} customers?`)) return;
 
                 const selectedIds = Array.from(this.state.selectedItems);
+<<<<<<< HEAD
 
                 this.state.customers = this.state.customers.filter(c => !selectedIds.includes(c.id));
                 this.saveAllToLocalStorage();
@@ -2901,12 +3022,22 @@
                         await this.state.firebaseDb.ref(`customers/${id}`).remove();
                     }
                 }
+=======
+                
+                // Remove from local state
+                this.state.customers = this.state.customers.filter(c => !selectedIds.includes(c.id));
+                
+                // Delete from Firebase
+                const deletePromises = selectedIds.map(id => this.deleteFromFirebase('customers', id));
+                await Promise.all(deletePromises);
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                 this.state.bulkMode = false;
                 this.state.selectedItems.clear();
                 this.render();
             }
 
+            // ✅ EXPORT FUNCTION - UPDATE TO USE Firebase DATA:
             exportSelected() {
                 const selectedCustomers = this.state.customers.filter(c =>
                     this.state.selectedItems.has(c.id)
@@ -2918,6 +3049,8 @@
                 this.state.bulkMode = false;
                 this.state.selectedItems.clear();
                 this.render();
+                
+                // Note: No localStorage save needed - data is already in Firebase
             }
 
             convertToCSV(data) {
@@ -3098,7 +3231,11 @@
                 }
             }
 
+<<<<<<< HEAD
             // File Upload
+=======
+            // ✅ UPDATE FILE UPLOAD - REPLACE localStorage WITH Firebase:
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
             async handleFileUpload(event, customerId) {
                 const file = event.target.files[0];
                 if (!file || file.type !== 'application/pdf') {
@@ -3106,13 +3243,21 @@
                     return;
                 }
 
+<<<<<<< HEAD
                 if (file.size > 10 * 1024 * 1024) { // 10MB limit
+=======
+                if (file.size > 10 * 1024 * 1024) {
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
                     alert('File size must be less than 10MB');
                     return;
                 }
 
+<<<<<<< HEAD
                 // NEW: Add authentication check
                 // NEW: Add authentication check
+=======
+                // Ensure authentication
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
                 if (!window.firebase.auth().currentUser) {
                     if (confirm('You need to sign in to upload files. Create a temporary account?')) {
                         try {
@@ -3157,6 +3302,7 @@
                         });
 
                         if (customerId) {
+<<<<<<< HEAD
                             // Update existing customer
                             this.saveAllToLocalStorage();
 
@@ -3165,6 +3311,10 @@
                                     this.state.customers.find(c => c.id === customerId)
                                 );
                             }
+=======
+                            // Save updated customer to Firebase
+                            await this.saveToFirebase('customers', target);
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
                         }
 
                         alert('File uploaded successfully');
@@ -3205,7 +3355,11 @@
 
                     if (customerId) {
                         // Update localStorage and Firebase
+<<<<<<< HEAD
                         this.saveAllToLocalStorage();
+=======
+                        this.saveAllToFirebase();
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                         if (this.state.firebaseDb && this.state.isOnline) {
                             await this.state.firebaseDb.ref(`customers/${customerId}`).set(customer);
@@ -3284,7 +3438,11 @@
                 delete newCustomer.customIndustry;
 
                 this.state.customers.push(newCustomer);
+<<<<<<< HEAD
                 this.saveAllToLocalStorage();
+=======
+                this.saveAllToFirebase();
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                 if (this.state.firebaseDb && this.state.isOnline) {
                     this.state.firebaseDb.ref(`customers/${newCustomer.id}`).set(newCustomer);
@@ -3323,9 +3481,15 @@
                         ...updatedData,
                         updatedAt: new Date().toISOString()
                     };
+<<<<<<< HEAD
 
                     this.saveAllToLocalStorage();
 
+=======
+                    
+                    this.saveAllToFirebase();
+                    
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
                     if (this.state.firebaseDb && this.state.isOnline) {
                         this.state.firebaseDb.ref(`customers/${this.state.editingCustomer.id}`)
                             .set(this.state.customers[index]);
@@ -3341,7 +3505,11 @@
                     this.state.opportunities = this.state.opportunities.filter(o => o.customerId !== customerId);
                     this.state.activities = this.state.activities.filter(a => a.customerId !== customerId);
 
+<<<<<<< HEAD
                     this.saveAllToLocalStorage();
+=======
+                    this.saveAllToFirebase();
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                     if (this.state.firebaseDb && this.state.isOnline) {
                         this.state.firebaseDb.ref(`customers/${customerId}`).remove();
@@ -3361,7 +3529,11 @@
                 };
 
                 this.state.opportunities.push(newOpportunity);
+<<<<<<< HEAD
                 this.saveAllToLocalStorage();
+=======
+                this.saveAllToFirebase();
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                 if (this.state.firebaseDb && this.state.isOnline) {
                     this.state.firebaseDb.ref(`opportunities/${newOpportunity.id}`).set(newOpportunity);
@@ -3381,7 +3553,11 @@
                 };
 
                 this.state.quotes.push(newQuote);
+<<<<<<< HEAD
                 this.saveAllToLocalStorage();
+=======
+                this.saveAllToFirebase();
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                 if (this.state.firebaseDb && this.state.isOnline) {
                     this.state.firebaseDb.ref(`quotes/${newQuote.id}`).set(newQuote);
@@ -3399,9 +3575,15 @@
                             ...this.state.formData,
                             updatedAt: new Date().toISOString()
                         };
+<<<<<<< HEAD
 
                         this.saveAllToLocalStorage();
 
+=======
+                        
+                        this.saveAllToFirebase();
+                        
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
                         if (this.state.firebaseDb && this.state.isOnline) {
                             await this.state.firebaseDb.ref(`activities/${this.state.editingActivity.id}`)
                                 .set(this.state.activities[index]);
@@ -3450,7 +3632,11 @@
                     }
 
                     this.state.activities.push(newActivity);
+<<<<<<< HEAD
                     this.saveAllToLocalStorage();
+=======
+                    this.saveAllToFirebase();
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                     if (this.state.firebaseDb && this.state.isOnline) {
                         await this.state.firebaseDb.ref(`activities/${newActivity.id}`).set(newActivity);
@@ -3470,7 +3656,11 @@
                     activity.completed = true;
                     activity.completedDate = new Date().toISOString();
 
+<<<<<<< HEAD
                     this.saveAllToLocalStorage();
+=======
+                    this.saveAllToFirebase();
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                     if (this.state.firebaseDb && this.state.isOnline) {
                         this.state.firebaseDb.ref(`activities/${activity.id}`).set(activity);
@@ -3499,7 +3689,11 @@
                 this.state.activities.push(newActivity);
                 originalActivity.followUpCreated = true;
 
+<<<<<<< HEAD
                 this.saveAllToLocalStorage();
+=======
+                this.saveAllToFirebase();
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                 if (this.state.firebaseDb && this.state.isOnline) {
                     this.state.firebaseDb.ref(`activities/${newActivity.id}`).set(newActivity);
@@ -3532,7 +3726,11 @@
             deleteActivity(id) {
                 if (confirm('Delete this activity?')) {
                     this.state.activities = this.state.activities.filter(a => a.id !== id);
+<<<<<<< HEAD
                     this.saveAllToLocalStorage();
+=======
+                    this.saveAllToFirebase();
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                     if (this.state.firebaseDb && this.state.isOnline) {
                         this.state.firebaseDb.ref(`activities/${id}`).remove();
@@ -3725,6 +3923,7 @@
                 event.target.classList.add('dragging');
             }
 
+            // ✅ UPDATE OPPORTUNITY DRAG & DROP - ADD Firebase save:
             handleDrop(event, newStage) {
                 event.preventDefault();
                 const oppId = event.dataTransfer.getData('opportunityId');
@@ -3733,6 +3932,7 @@
                 if (opportunity) {
                     opportunity.stage = newStage;
                     opportunity.updatedAt = new Date().toISOString();
+<<<<<<< HEAD
 
                     this.saveAllToLocalStorage();
 
@@ -3740,6 +3940,12 @@
                         this.state.firebaseDb.ref(`opportunities/${oppId}`).set(opportunity);
                     }
 
+=======
+                    
+                    // Save to Firebase
+                    this.saveToFirebase('opportunities', opportunity);
+                    
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
                     this.render();
                 }
 
@@ -3928,7 +4134,36 @@
                     </div>
                 `;
             }
+<<<<<<< HEAD
 
+=======
+            // ✅ ADD CONNECTION STATUS INDICATOR TO YOUR NAVIGATION:
+            renderNavigationStatus() {
+                return `
+                    <div class="mt-8 pt-8 border-t border-gray-800">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                ${this.state.isOnline ? 
+                                    this.icon('Cloud', 16, 'text-green-500') : 
+                                    this.icon('CloudOff', 16, 'text-red-500')
+                                }
+                                <span class="text-xs text-gray-400">
+                                    ${this.state.isOnline ? 'Firebase Connected' : 'Offline Mode'}
+                                </span>
+                            </div>
+                            ${this.state.isSyncing ? 
+                                this.icon('RefreshCw', 16, 'text-blue-500 animate-spin') : ''
+                            }
+                        </div>
+                        ${this.state.lastSync ? `
+                            <p class="text-xs text-gray-500">
+                                Last sync: ${new Date(this.state.lastSync).toLocaleTimeString()}
+                            </p>
+                        ` : ''}
+                    </div>
+                `;
+            }
+>>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
             renderGlobalSearchResults() {
                 const results = this.state.globalSearchResults;
                 const hasResults = Object.values(results).some(arr => arr.length > 0);
