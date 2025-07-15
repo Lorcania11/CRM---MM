@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -50,188 +51,204 @@
             https://*.googleusercontent.com
             https://*.google.com
             https://*.gstatic.com;
-    font-src 'self' data: 
-        https://fonts.gstatic.com;
+        font-src 'self' data: 
+            https://fonts.gstatic.com;
 ">
-    
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-    /* Mobile-specific optimizations */
-    @media (max-width: 1024px) {
-        button, a, input, select, textarea {
-            min-height: 44px;
-        }
-        
-        * {
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        .safe-top {
-            padding-top: env(safe-area-inset-top);
-        }
-        
-        .safe-bottom {
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-        
-        button, nav {
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        
-        input, select, textarea {
-            font-size: 16px;
-        }
-    }
-    
-    @supports (height: 100dvh) {
-        .min-h-screen {
-            min-height: 100dvh;
-        }
-    }
 
-    /* Fix for navigation scroll and Market Intel button visibility */
-    nav.space-y-2 {
-        max-height: calc(100vh - 200px);
-        overflow-y: auto;
-        padding-bottom: 40px;
-    }
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Mobile-specific optimizations */
+        @media (max-width: 1024px) {
 
-    nav.space-y-2 button {
-        position: relative;
-        z-index: 10;
-        width: 100%;
-        cursor: pointer;
-        min-height: 44px;
-        display: flex;
-        align-items: center;
-    }
+            button,
+            a,
+            input,
+            select,
+            textarea {
+                min-height: 44px;
+            }
 
-    nav.space-y-2::-webkit-scrollbar {
-        width: 6px;
-    }
+            * {
+                -webkit-overflow-scrolling: touch;
+            }
 
-    nav.space-y-2::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 3px;
-    }
+            .safe-top {
+                padding-top: env(safe-area-inset-top);
+            }
 
-    nav.space-y-2::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.3);
-        border-radius: 3px;
-    }
+            .safe-bottom {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
 
-    nav.space-y-2::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 255, 255, 0.5);
-    }
+            button,
+            nav {
+                -webkit-user-select: none;
+                user-select: none;
+            }
 
-    /* Ensure mobile menu shows all items */
-    @media (max-width: 1024px) {
+            input,
+            select,
+            textarea {
+                font-size: 16px;
+            }
+        }
+
+        @supports (height: 100dvh) {
+            .min-h-screen {
+                min-height: 100dvh;
+            }
+        }
+
+        /* Fix for navigation scroll and Market Intel button visibility */
         nav.space-y-2 {
-            max-height: calc(100vh - 150px);
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+            padding-bottom: 40px;
         }
-    }
 
-    /* Form sections styling */
-    .form-section {
-        border: 1px solid #e5e7eb;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        margin-bottom: 1rem;
-    }
+        nav.space-y-2 button {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            cursor: pointer;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+        }
 
-    .form-section-title {
-        font-weight: 600;
-        margin-bottom: 0.75rem;
-        color: #374151;
-    }
+        nav.space-y-2::-webkit-scrollbar {
+            width: 6px;
+        }
 
-    /* Character counter styling */
-    .char-counter {
-        font-size: 0.75rem;
-        color: #6b7280;
-        text-align: right;
-        margin-top: 0.25rem;
-    }
+        nav.space-y-2::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
 
-    /* URL input validation */
-    input[type="url"]:invalid {
-        border-color: #ef4444;
-    }
+        nav.space-y-2::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
 
-    input[type="url"]:valid {
-        border-color: #10b981;
-    }
+        nav.space-y-2::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
 
-    /* Drag and drop styles */
-    .dragging {
-        opacity: 0.5;
-    }
+        /* Ensure mobile menu shows all items */
+        @media (max-width: 1024px) {
+            nav.space-y-2 {
+                max-height: calc(100vh - 150px);
+            }
+        }
 
-    /* Recording animation */
-    .recording {
-        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
+        /* Form sections styling */
+        .form-section {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
 
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: .5; }
-    }
+        .form-section-title {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: #374151;
+        }
 
-    /* Checkbox styles */
-    .bulk-checkbox {
-        width: 20px;
-        height: 20px;
-        cursor: pointer;
-    }
+        /* Character counter styling */
+        .char-counter {
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-align: right;
+            margin-top: 0.25rem;
+        }
 
-    /* Product tag */
-    .product-tag {
-        display: inline-block;
-        padding: 0.25rem 0.5rem;
-        background-color: #e5e7eb;
-        border-radius: 0.25rem;
-        font-size: 0.75rem;
-        margin: 0.125rem;
-    }
+        /* URL input validation */
+        input[type="url"]:invalid {
+            border-color: #ef4444;
+        }
 
-    /* Contact section styles */
-    .contact-section {
-        background-color: #f9fafb;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        margin-bottom: 1rem;
-    }
+        input[type="url"]:valid {
+            border-color: #10b981;
+        }
 
-    .remove-contact-btn {
-        background-color: #ef4444;
-        color: white;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-size: 0.875rem;
-    }
+        /* Drag and drop styles */
+        .dragging {
+            opacity: 0.5;
+        }
 
-    .remove-contact-btn:hover {
-        background-color: #dc2626;
-    }
+        /* Recording animation */
+        .recording {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
 
-    /* Line clamp for text truncation */
-    .line-clamp-2 {
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-        -webkit-box-orient: vertical;
-    }
+        @keyframes pulse {
 
-    /* Fix for chart container - ADD IT HERE AT THE END */
-    .market-chart-container {
-        min-height: 256px;
-        display: flex;
-        flex-direction: column;
-    }
-</style>
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .5;
+            }
+        }
+
+        /* Checkbox styles */
+        .bulk-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        /* Product tag */
+        .product-tag {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background-color: #e5e7eb;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            margin: 0.125rem;
+        }
+
+        /* Contact section styles */
+        .contact-section {
+            background-color: #f9fafb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .remove-contact-btn {
+            background-color: #ef4444;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .remove-contact-btn:hover {
+            background-color: #dc2626;
+        }
+
+        /* Line clamp for text truncation */
+        .line-clamp-2 {
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        /* Fix for chart container - ADD IT HERE AT THE END */
+        .market-chart-container {
+            min-height: 256px;
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
 </head>
+
 <body>
     <div id="app"></div>
 
@@ -268,8 +285,9 @@
             tenantId: 'f700d315-223c-4939-a49a-1ebef89110f6',
             redirectUri: 'https://lorcania11.github.io/CRM---MM/',
             scopes: [
-            'User.Read',
-            'Files.Read',
+                'User.Read',
+                'Files.Read',
+                'Files.ReadWrite',
             ]
         };
         const msalConfig = {
@@ -277,7 +295,7 @@
                 clientId: "1e620e1b-c6dc-4e6c-b0fd-b403d1e008df",
                 authority: "https://login.microsoftonline.com/f700d315-223c-4939-a49a-1ebef89110f6",
                 redirectUri: "https://lorcania11.github.io/CRM---MM/",
-                knownAuthorities: ["login.microsoftonline.com"] 
+                knownAuthorities: ["login.microsoftonline.com"]
             },
             cache: {
                 cacheLocation: "localStorage",
@@ -295,14 +313,14 @@
                     metals: '/commodities?category=metals'
                 }
             },
-            
+
             // Alternative steel pricing from Commodities API
             commoditiesAPI: {
                 baseUrl: 'https://commodities-api.com/api',
                 apiKey: 'f8a5c2e9d1b7a3f4e6d8c9b2a5e7f1d3', // Free tier placeholder
                 symbols: ['STEEL', 'XCU', 'ALUMINUM', 'IRON-ORE']
             },
-            
+
             // APITube.io for comprehensive steel market news and intelligence
             apiTubeNews: {
                 baseUrl: 'https://api.apitube.io/v1',
@@ -313,7 +331,7 @@
                 steelTopics: ['commodities', 'business', 'technology', 'industry'],
                 steelKeywords: 'steel OR "steel prices" OR "steel market" OR "steel industry" OR "iron ore" OR "steel production" OR Nucor OR "Cleveland-Cliffs" OR "US Steel"'
             },
-            
+
             // Economic indicators (using Federal Reserve API)
             fredAPI: {
                 baseUrl: 'https://api.stlouisfed.org/fred/series/observations',
@@ -328,31 +346,31 @@
 
         // Industries list
         const INDUSTRIES = [
-            "Access Flooring", "Agriculture", "Association / Trade Group", "Automotive", 
-            "Basement Columns", "Carport / Metal Buildings", "Carports", "Chair Lifts", 
-            "Containers (IBC)", "Conveyor", "DOT Manufacturing", "Defense Contractor", 
-            "Distributor", "Engineered Cabs", "Equipment", "Fabric Structures / Hoop Buildings", 
-            "Fabrication", "Fans & Fans Racks Manufacturing", "Fencing", "Fitness Equipment", 
-            "Furniture", "Highway", "Highway, Rail", "ISO Intermodal Containers", "Ladder", 
-            "Lawn & Garden", "Manufacturer", "Metal Buildings", "Metal Buildings / Carports", 
-            "Metal Stamping", "Mezzanines", "Mobile Housing", "RV", "Racking - Automotive", 
-            "Racking - Computer Servers", "Racking - Servers", "Racking / Storage", "Racks", 
-            "Roll Former", "Roll Off / Dumpster", "Rollforming", "Scaffolding", "Service center", 
-            "Signpost", "Solar", "Steel buildings", "Storage / Racking", 
-            "Structural Steel Fabrication", "Tension Fabric Buildings", "Tire Racks", 
+            "Access Flooring", "Agriculture", "Association / Trade Group", "Automotive",
+            "Basement Columns", "Carport / Metal Buildings", "Carports", "Chair Lifts",
+            "Containers (IBC)", "Conveyor", "DOT Manufacturing", "Defense Contractor",
+            "Distributor", "Engineered Cabs", "Equipment", "Fabric Structures / Hoop Buildings",
+            "Fabrication", "Fans & Fans Racks Manufacturing", "Fencing", "Fitness Equipment",
+            "Furniture", "Highway", "Highway, Rail", "ISO Intermodal Containers", "Ladder",
+            "Lawn & Garden", "Manufacturer", "Metal Buildings", "Metal Buildings / Carports",
+            "Metal Stamping", "Mezzanines", "Mobile Housing", "RV", "Racking - Automotive",
+            "Racking - Computer Servers", "Racking - Servers", "Racking / Storage", "Racks",
+            "Roll Former", "Roll Off / Dumpster", "Rollforming", "Scaffolding", "Service center",
+            "Signpost", "Solar", "Steel buildings", "Storage / Racking",
+            "Structural Steel Fabrication", "Tension Fabric Buildings", "Tire Racks",
             "Trailers", "Truck Equipment", "Tubular Wire Carriers", "Other"
         ];
 
         // Products list
         const PRODUCTS = [
-            "Square Tubing - 1x1", "Square Tubing - 1.5x1.5", "Square Tubing - 2x2", 
+            "Square Tubing - 1x1", "Square Tubing - 1.5x1.5", "Square Tubing - 2x2",
             "Square Tubing - 2.5x2.5", "Square Tubing - 3x3", "Square Tubing - 4x4",
             "Rectangle Tubing - 2x1", "Rectangle Tubing - 3x2", "Rectangle Tubing - 4x2",
             "Rectangle Tubing - 4x3", "Rectangle Tubing - 6x2", "Rectangle Tubing - 6x4",
             "Round Pipe - 1 inch", "Round Pipe - 1.5 inch", "Round Pipe - 2 inch",
-            "Round Pipe - 2.5 inch", "Round Pipe - 3 inch", "Round Pipe - 4 inch", 
+            "Round Pipe - 2.5 inch", "Round Pipe - 3 inch", "Round Pipe - 4 inch",
             "Custom Size Tube",
-            "Custom Cut-to-Length", 
+            "Custom Cut-to-Length",
             "Galvanized", "HR", "HRPO", "Gavaneal", "CR",
             "Other"
         ];
@@ -408,24 +426,24 @@
                     customerDetailTab: 'opportunities',
                     viewingCustomerId: null,
                     excelIntegration: {
-                    isConnected: false,
-                    accessToken: null,
-                    excelFiles: [],
-                    activeFile: null,
-                    activeWorkbook: null,
-                    worksheets: [],
-                    activeWorksheet: null,
-                    cellData: [],
-                    isLoading: false,
-                    error: null,
-                    viewMode: 'grid', // 'grid' or 'iframe'
-                    autoSyncEnabled: false,
-                    lastSync: null,
-                    embeddedUrl: null
-                },
-                showExcelModal: false,
-                excelEditingCell: null,
-                    
+                        isConnected: false,
+                        accessToken: null,
+                        excelFiles: [],
+                        activeFile: null,
+                        activeWorkbook: null,
+                        worksheets: [],
+                        activeWorksheet: null,
+                        cellData: [],
+                        isLoading: false,
+                        error: null,
+                        viewMode: 'grid', // 'grid' or 'iframe'
+                        autoSyncEnabled: false,
+                        lastSync: null,
+                        embeddedUrl: null
+                    },
+                    showExcelModal: false,
+                    excelEditingCell: null,
+
                     // Market Intelligence State
                     marketIntelligence: {
                         steelPrices: {
@@ -528,21 +546,21 @@
                             this.state.firebaseDb = window.firebase.database();
                             this.state.firebaseStorage = window.firebase.storage();
                             this.state.firebaseAuth = window.firebase.auth();
-                            
-    // Enable anonymous authentication by default
-    window.firebase.auth().onAuthStateChanged(async (user) => {
-        if (!user) {
-            try {
-                await window.firebase.auth().signInAnonymously();
-                console.log('Auto-signed in anonymously for Firebase operations');
-            } catch (error) {
-                console.error('Auto anonymous sign-in failed:', error);
-            }
-        }
-    });
-    
-    this.setupFirebaseListeners();
-}
+
+                            // Enable anonymous authentication by default
+                            window.firebase.auth().onAuthStateChanged(async (user) => {
+                                if (!user) {
+                                    try {
+                                        await window.firebase.auth().signInAnonymously();
+                                        console.log('Auto-signed in anonymously for Firebase operations');
+                                    } catch (error) {
+                                        console.error('Auto anonymous sign-in failed:', error);
+                                    }
+                                }
+                            });
+
+                            this.setupFirebaseListeners();
+                        }
                     } catch (error) {
                         console.error('Error loading Firebase:', error);
                         this.state.isFirebaseConfigured = false;
@@ -603,7 +621,7 @@
 
                     // Process Commoditic data
                     if (commoditicData.status && commoditicData.status.message === 'Success') {
-                        const steelData = commoditicData.results.find(item => 
+                        const steelData = commoditicData.results.find(item =>
                             item.Name.toLowerCase().includes('steel') || item.Name.toLowerCase().includes('hrc')
                         );
                         const copperData = commoditicData.results.find(item => item.Name.toLowerCase().includes('copper'));
@@ -644,7 +662,7 @@
 
                     // Calculate trends
                     this.calculateMarketTrends();
-                    
+
                     this.state.marketIntelligence.isLoading = false;
                     this.render();
                 } catch (error) {
@@ -672,13 +690,13 @@
             async fetchEconomicIndicators() {
                 try {
                     const indicators = {};
-                    
+
                     // Fetch steel production index
                     const productionResponse = await fetch(
                         `${MARKET_INTELLIGENCE_CONFIG.fredAPI.baseUrl}?series_id=${MARKET_INTELLIGENCE_CONFIG.fredAPI.series.steel_production}&api_key=${MARKET_INTELLIGENCE_CONFIG.fredAPI.apiKey}&file_type=json&limit=1&sort_order=desc`
                     );
                     const productionData = await productionResponse.json();
-                    
+
                     if (productionData.observations && productionData.observations.length > 0) {
                         indicators.steelProduction = {
                             value: parseFloat(productionData.observations[0].value),
@@ -723,25 +741,25 @@
 
                 const recent = historical.slice(-7); // Last 7 days
                 const older = historical.slice(-14, -7); // Previous 7 days
-                
+
                 const recentAvg = recent.reduce((sum, item) => sum + item.price, 0) / recent.length;
                 const olderAvg = older.reduce((sum, item) => sum + item.price, 0) / older.length;
-                
+
                 const priceChange = ((recentAvg - olderAvg) / olderAvg) * 100;
-                
+
                 // Calculate volatility (standard deviation)
                 const prices = recent.map(item => item.price);
                 const mean = recentAvg;
                 const variance = prices.reduce((sum, price) => sum + Math.pow(price - mean, 2), 0) / prices.length;
                 const volatility = Math.sqrt(variance);
-                
+
                 this.state.marketIntelligence.marketTrends = {
                     priceDirection: priceChange > 1 ? 'rising' : priceChange < -1 ? 'falling' : 'stable',
                     priceChangePercent: priceChange.toFixed(2),
                     volatility: volatility.toFixed(2),
                     demandForecast: this.calculateDemandForecast()
                 };
-                
+
                 this.generateRecommendations();
             }
 
@@ -749,10 +767,10 @@
                 // Simple forecast based on historical trends and seasonal patterns
                 const historical = this.state.marketIntelligence.steelPrices.historical;
                 if (historical.length < 14) return 'insufficient_data';
-                
+
                 const currentMonth = new Date().getMonth();
                 const constructionSeasons = [2, 3, 4, 5, 6, 7, 8]; // Mar-Sep higher demand
-                
+
                 if (constructionSeasons.includes(currentMonth)) {
                     return 'high'; // Construction season
                 } else if (currentMonth === 1 || currentMonth === 11) {
@@ -813,9 +831,9 @@
                             'from': new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // Last 7 days
                         }).toString()
                     );
-                    
+
                     const newsData = await apiTubeResponse.json();
-                    
+
                     if (newsData.status === 'success' && newsData.data) {
                         this.state.marketIntelligence.marketNews = newsData.data.map(article => ({
                             title: article.title,
@@ -844,7 +862,7 @@
                             {
                                 title: "error",
                                 description: "error",
-                                url: "#", 
+                                url: "#",
                                 publishedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
                                 source: "Financial News",
                                 sentiment: 'positive',
@@ -874,16 +892,16 @@
             analyzeSentiment(text) {
                 const positiveWords = ['increase', 'rise', 'strong', 'growth', 'demand', 'expansion', 'positive', 'boost', 'recovery'];
                 const negativeWords = ['decline', 'fall', 'weak', 'drop', 'decrease', 'shortage', 'crisis', 'concern', 'volatility'];
-                
+
                 const words = text.toLowerCase().split(/\s+/);
                 let positiveScore = 0;
                 let negativeScore = 0;
-                
+
                 words.forEach(word => {
                     if (positiveWords.some(pos => word.includes(pos))) positiveScore++;
                     if (negativeWords.some(neg => word.includes(neg))) negativeScore++;
                 });
-                
+
                 if (positiveScore > negativeScore) return 'positive';
                 if (negativeScore > positiveScore) return 'negative';
                 return 'neutral';
@@ -892,38 +910,38 @@
             calculateRelevanceScore(text) {
                 const steelKeywords = ['steel', 'iron ore', 'metals', 'manufacturing', 'construction', 'automotive'];
                 const competitorKeywords = ['nucor', 'cleveland-cliffs', 'us steel', 'arcelormittal'];
-                
+
                 const words = text.toLowerCase();
                 let score = 0;
-                
+
                 steelKeywords.forEach(keyword => {
                     if (words.includes(keyword)) score += 0.2;
                 });
-                
+
                 competitorKeywords.forEach(keyword => {
                     if (words.includes(keyword)) score += 0.3;
                 });
-                
+
                 return Math.min(score, 1.0);
             }
 
             analyzeNewsSentiment() {
                 const news = this.state.marketIntelligence.marketNews;
                 if (!news || news.length === 0) return;
-                
+
                 const sentimentCounts = news.reduce((acc, article) => {
                     acc[article.sentiment] = (acc[article.sentiment] || 0) + 1;
                     return acc;
                 }, {});
-                
+
                 const totalArticles = news.length;
                 const positiveRatio = (sentimentCounts.positive || 0) / totalArticles;
                 const negativeRatio = (sentimentCounts.negative || 0) / totalArticles;
-                
+
                 let marketSentiment = 'neutral';
                 if (positiveRatio > 0.6) marketSentiment = 'bullish';
                 else if (negativeRatio > 0.6) marketSentiment = 'bearish';
-                
+
                 this.state.marketIntelligence.marketSentiment = {
                     overall: marketSentiment,
                     distribution: sentimentCounts,
@@ -936,7 +954,7 @@
                 const trends = this.state.marketIntelligence.marketTrends;
                 const current = this.state.marketIntelligence.steelPrices.current;
                 const recommendations = [];
-                
+
                 // Price trend recommendations
                 if (trends.priceDirection === 'rising') {
                     recommendations.push({
@@ -946,7 +964,7 @@
                         description: `Steel prices are rising (${trends.priceChangePercent}% this week). Consider increasing inventory before further increases.`,
                         action: 'Review purchasing strategy with suppliers'
                     });
-                    
+
                     recommendations.push({
                         type: 'sales',
                         priority: 'medium',
@@ -963,7 +981,7 @@
                         action: 'Contact customers with competitive pricing offers'
                     });
                 }
-                
+
                 // Volatility recommendations
                 if (parseFloat(trends.volatility) > 50) {
                     recommendations.push({
@@ -974,7 +992,7 @@
                         action: 'Review hedging options and contract terms'
                     });
                 }
-                
+
                 // Seasonal recommendations
                 if (trends.demandForecast === 'high') {
                     recommendations.push({
@@ -985,7 +1003,7 @@
                         action: 'Review inventory levels for Q2-Q3 demand'
                     });
                 }
-                
+
                 this.state.marketIntelligence.recommendations = recommendations;
             }
             renderOutlookCalendar() {
@@ -1042,8 +1060,8 @@
                                 <div class="flex items-center justify-between mb-4">
                                     <h3 class="text-lg font-semibold">Steel Price</h3>
                                     ${trends?.priceDirection === 'rising' ? this.icon('TrendingUp', 24, 'text-green-500') :
-                                      trends?.priceDirection === 'falling' ? this.icon('TrendingDown', 24, 'text-red-500') :
-                                      this.icon('Minus', 24, 'text-gray-500')}
+                        trends?.priceDirection === 'falling' ? this.icon('TrendingDown', 24, 'text-red-500') :
+                            this.icon('Minus', 24, 'text-gray-500')}
                                 </div>
                                 <p class="text-3xl font-bold">${steelPrice ? '$' + steelPrice.toFixed(2) : 'Loading...'}</p>
                                 <p class="text-sm text-gray-600">per ton (CNY/USD)</p>
@@ -1071,14 +1089,13 @@
                                 <p class="text-3xl font-bold capitalize">${trends?.demandForecast || 'Calculating...'}</p>
                                 <p class="text-sm text-gray-600">Next quarter outlook</p>
                                 <div class="mt-4">
-                                    <span class="inline-block px-3 py-1 text-sm rounded-full ${
-                                        trends?.demandForecast === 'high' ? 'bg-red-100 text-red-800' :
-                                        trends?.demandForecast === 'moderate' ? 'bg-yellow-100 text-yellow-800' :
-                                        'bg-green-100 text-green-800'
-                                    }">
+                                    <span class="inline-block px-3 py-1 text-sm rounded-full ${trends?.demandForecast === 'high' ? 'bg-red-100 text-red-800' :
+                        trends?.demandForecast === 'moderate' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                    }">
                                         ${trends?.demandForecast === 'high' ? 'High Demand Period' :
-                                          trends?.demandForecast === 'moderate' ? 'Moderate Demand' :
-                                          'Lower Demand Period'}
+                        trends?.demandForecast === 'moderate' ? 'Moderate Demand' :
+                            'Lower Demand Period'}
                                     </span>
                                 </div>
                             </div>
@@ -1134,14 +1151,13 @@
                                 <h3 class="text-lg font-semibold mb-4">Market Sentiment</h3>
                                 ${mi.marketSentiment ? `
                                     <div class="text-center">
-                                        <div class="text-3xl font-bold mb-2 ${
-                                            mi.marketSentiment.overall === 'bullish' ? 'text-green-600' :
-                                            mi.marketSentiment.overall === 'bearish' ? 'text-red-600' :
-                                            'text-gray-600'
-                                        }">
+                                        <div class="text-3xl font-bold mb-2 ${mi.marketSentiment.overall === 'bullish' ? 'text-green-600' :
+                            mi.marketSentiment.overall === 'bearish' ? 'text-red-600' :
+                                'text-gray-600'
+                        }">
                                             ${mi.marketSentiment.overall === 'bullish' ? '📈 Bullish' :
-                                              mi.marketSentiment.overall === 'bearish' ? '📉 Bearish' :
-                                              '➡️ Neutral'}
+                            mi.marketSentiment.overall === 'bearish' ? '📉 Bearish' :
+                                '➡️ Neutral'}
                                         </div>
                                         <div class="text-sm text-gray-600 space-y-1">
                                             <p>Positive: ${mi.marketSentiment.positiveRatio}%</p>
@@ -1162,11 +1178,10 @@
                                 </div>
                                 <div class="space-y-3 max-h-80 overflow-y-auto">
                                     ${(mi.marketNews || []).slice(0, 8).map(article => `
-                                        <div class="border-l-4 ${
-                                            article.sentiment === 'positive' ? 'border-green-500 bg-green-50' :
-                                            article.sentiment === 'negative' ? 'border-red-500 bg-red-50' :
+                                        <div class="border-l-4 ${article.sentiment === 'positive' ? 'border-green-500 bg-green-50' :
+                                        article.sentiment === 'negative' ? 'border-red-500 bg-red-50' :
                                             'border-gray-500 bg-gray-50'
-                                        } p-3 rounded">
+                                    } p-3 rounded">
                                             <div class="flex justify-between items-start">
                                                 <div class="flex-1">
                                                     <h4 class="font-medium text-sm leading-tight">
@@ -1182,11 +1197,10 @@
                                                         </span>
                                                     </div>
                                                 </div>
-                                                <span class="ml-2 px-2 py-1 text-xs rounded-full ${
-                                                    article.sentiment === 'positive' ? 'bg-green-100 text-green-800' :
-                                                    article.sentiment === 'negative' ? 'bg-red-100 text-red-800' :
-                                                    'bg-gray-100 text-gray-800'
-                                                }">
+                                                <span class="ml-2 px-2 py-1 text-xs rounded-full ${article.sentiment === 'positive' ? 'bg-green-100 text-green-800' :
+                                        article.sentiment === 'negative' ? 'bg-red-100 text-red-800' :
+                                            'bg-gray-100 text-gray-800'
+                                    }">
                                                     ${article.sentiment}
                                                 </span>
                                             </div>
@@ -1203,10 +1217,9 @@
                                 <h3 class="text-lg font-semibold mb-4">Actionable Recommendations</h3>
                                 <div class="space-y-4">
                                     ${(mi.recommendations || []).map(rec => `
-                                        <div class="border-l-4 ${
-                                            rec.priority === 'high' ? 'border-red-500 bg-red-50' :
+                                        <div class="border-l-4 ${rec.priority === 'high' ? 'border-red-500 bg-red-50' :
                                             rec.priority === 'medium' ? 'border-yellow-500 bg-yellow-50' :
-                                            'border-green-500 bg-green-50'
+                                                'border-green-500 bg-green-50'
                                         } p-4 rounded">
                                             <div class="flex justify-between items-start">
                                                 <div>
@@ -1214,11 +1227,10 @@
                                                     <p class="text-sm text-gray-600 mt-1">${rec.description}</p>
                                                     <p class="text-xs text-blue-600 mt-2 font-medium">${rec.action}</p>
                                                 </div>
-                                                <span class="px-2 py-1 text-xs rounded-full ${
-                                                    rec.priority === 'high' ? 'bg-red-100 text-red-800' :
-                                                    rec.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                                    'bg-green-100 text-green-800'
-                                                }">
+                                                <span class="px-2 py-1 text-xs rounded-full ${rec.priority === 'high' ? 'bg-red-100 text-red-800' :
+                                            rec.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                                'bg-green-100 text-green-800'
+                                        }">
                                                     ${rec.priority}
                                                 </span>
                                             </div>
@@ -1235,8 +1247,8 @@
                                         <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded">
                                             <div class="flex-shrink-0">
                                                 ${change.type === 'price_increase' ? this.icon('TrendingUp', 16, 'text-red-500') :
-                                                  change.type === 'price_decrease' ? this.icon('TrendingDown', 16, 'text-green-500') :
-                                                  this.icon('Package', 16, 'text-blue-500')}
+                                                change.type === 'price_decrease' ? this.icon('TrendingDown', 16, 'text-green-500') :
+                                                    this.icon('Package', 16, 'text-blue-500')}
                                             </div>
                                             <div class="flex-1">
                                                 <p class="text-sm font-medium">${change.company}</p>
@@ -1276,10 +1288,10 @@
                 return `
                     <div class="h-full flex items-end justify-between space-x-2 px-4">
                         ${last7Days.map(item => {
-                            const heightPercent = ((item.price - minPrice) / priceRange) * 80 + 20; // Min 20% height
-                            const date = new Date(item.date);
-                            const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
-                            return `
+                    const heightPercent = ((item.price - minPrice) / priceRange) * 80 + 20; // Min 20% height
+                    const date = new Date(item.date);
+                    const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+                    return `
                                 <div class="flex-1 flex flex-col items-center justify-end">
                                     <div class="text-xs font-medium mb-1">
                                         $${item.price.toFixed(0)}
@@ -1293,7 +1305,7 @@
                                     </div>
                                 </div>
                             `;
-                        }).join('')}
+                }).join('')}
                     </div>
                 `;
             }
@@ -1401,44 +1413,44 @@
                 try {
                     this.state.excelIntegration.isLoading = true;
                     this.render();
-            
+
                     const headers = {
                         Authorization: `Bearer ${this.state.excelIntegration.accessToken}`
                     };
-            
+
                     // Step 1: Ensure OneDrive is provisioned
                     const driveResp = await fetch('https://graph.microsoft.com/v1.0/me/drive', { headers });
                     if (!driveResp.ok) throw new Error('OneDrive is not provisioned for this user.');
-            
+
                     let files = [];
-            
+
                     // Step 2: Try search API first
                     const searchResp = await fetch("https://graph.microsoft.com/v1.0/me/drive/root/search(q='.xlsx')", { headers });
-            
+
                     if (searchResp.ok) {
                         const searchData = await searchResp.json();
                         files = searchData.value;
                     } else if (searchResp.status === 404) {
                         console.warn("Search API returned 404. Falling back to children API...");
-            
+
                         const childrenResp = await fetch("https://graph.microsoft.com/v1.0/me/drive/root/children", { headers });
                         if (!childrenResp.ok) {
                             const errorText = await childrenResp.text();
                             throw new Error(`Fallback failed: ${errorText}`);
                         }
-            
+
                         const childrenData = await childrenResp.json();
                         files = childrenData.value;
                     } else {
                         const errorText = await searchResp.text();
                         throw new Error(`Search failed: ${errorText}`);
                     }
-            
+
                     // Step 3: Filter Excel files
                     this.state.excelIntegration.excelFiles = files.filter(file =>
                         file.name.endsWith('.xlsx') || file.name.endsWith('.xls')
                     );
-            
+
                 } catch (error) {
                     console.error('❌ Error fetching Excel files:', error);
                     this.state.excelIntegration.error = error.message;
@@ -1770,11 +1782,10 @@
                             <div class="flex space-x-3">
                                 ${this.state.excelIntegration.isConnected ? `
                                     <button onclick="app.state.excelIntegration.autoSyncEnabled = !app.state.excelIntegration.autoSyncEnabled; app.render()"
-                                            class="flex items-center space-x-2 px-4 py-2 rounded-lg ${
-                                                this.state.excelIntegration.autoSyncEnabled 
-                                                    ? 'bg-green-600 text-white hover:bg-green-700' 
-                                                    : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
-                                            }">
+                                            class="flex items-center space-x-2 px-4 py-2 rounded-lg ${this.state.excelIntegration.autoSyncEnabled
+                            ? 'bg-green-600 text-white hover:bg-green-700'
+                            : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
+                        }">
                                         ${this.icon('RefreshCw', 20)}
                                         <span>Auto-Sync: ${this.state.excelIntegration.autoSyncEnabled ? 'ON' : 'OFF'}</span>
                                     </button>
@@ -1823,11 +1834,10 @@
                                         <div class="space-y-2 max-h-96 overflow-y-auto">
                                             ${this.state.excelIntegration.excelFiles.map(file => `
                                                 <button onclick="app.openExcelFile('${file.id}')"
-                                                        class="w-full text-left p-3 rounded ${
-                                                            this.state.excelIntegration.activeFile === file.id 
-                                                                ? 'bg-blue-50 border border-blue-200' 
-                                                                : 'hover:bg-gray-50'
-                                                        }">
+                                                        class="w-full text-left p-3 rounded ${this.state.excelIntegration.activeFile === file.id
+                                ? 'bg-blue-50 border border-blue-200'
+                                : 'hover:bg-gray-50'
+                            }">
                                                     <div class="flex items-center space-x-2">
                                                         <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                                                             <path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z"></path>
@@ -1868,10 +1878,10 @@
 
                                 <!-- Main Content Area -->
                                 <div class="lg:col-span-3">
-                                    ${this.state.excelIntegration.activeFile ? 
-                                        this.renderExcelContent() : 
-                                        this.renderExcelPlaceholder()
-                                    }
+                                    ${this.state.excelIntegration.activeFile ?
+                        this.renderExcelContent() :
+                        this.renderExcelPlaceholder()
+                    }
                                 </div>
                             </div>
                         `}
@@ -1905,7 +1915,7 @@
 
             renderExcelGrid() {
                 const data = this.state.excelIntegration.cellData;
-                
+
                 if (!data || !data.headers) {
                     return `
                         <div class="bg-white rounded-lg shadow p-8 text-center">
@@ -1913,7 +1923,7 @@
                         </div>
                     `;
                 }
-                
+
                 return `
                     <div class="bg-white rounded-lg shadow">
                         <div class="p-4 border-b">
@@ -1997,7 +2007,7 @@
             handleCellEdit(element, row, col) {
                 const newValue = element.textContent.trim();
                 const oldValue = this.state.excelIntegration.cellData.rawData[row][col];
-                
+
                 if (newValue !== oldValue) {
                     this.updateCell(
                         this.state.excelIntegration.activeFile,
@@ -2012,7 +2022,7 @@
             showAddRowDialog() {
                 const columnCount = this.state.excelIntegration.cellData.headers.length;
                 const newRow = new Array(columnCount).fill('');
-                
+
                 // Simple prompt for demo - you can enhance this with a proper modal
                 const firstColumnValue = prompt('Enter value for first column:');
                 if (firstColumnValue) {
@@ -2028,7 +2038,7 @@
             // Continue with Google Calendar initialization
             async initGoogleCalendar() {
                 console.log('Initializing Google Calendar integration...');
-                
+
                 if (!GOOGLE_CONFIG.clientId || GOOGLE_CONFIG.clientId.includes('YOUR_GOOGLE_CLIENT_ID')) {
                     console.log('Google Calendar integration not configured');
                     return;
@@ -2048,42 +2058,42 @@
                         scope: GOOGLE_CONFIG.scope,
                         callback: async (response) => {
                             console.log('Token callback received:', response);
-                            
+
                             if (response.error) {
                                 console.error('Token error:', response);
                                 alert(`Authentication error: ${response.error}`);
                                 return;
                             }
-                            
+
                             if (!response.access_token) {
                                 console.error('No access token received');
                                 alert('Authentication failed: No access token received');
                                 return;
                             }
-                            
+
                             // Store the access token
                             this.accessToken = response.access_token;
                             console.log('Access token stored successfully');
-                            
+
                             // Store in localStorage for persistence
                             localStorage.setItem('googleAccessToken', response.access_token);
                             localStorage.setItem('googleCalendarConnected', 'true');
-                            
+
                             // Set the token for the API client
                             gapi.client.setToken({
                                 access_token: response.access_token
                             });
-                            
+
                             // Try to set connected status immediately to update UI
                             this.state.googleCalendarConnected = true;
                             this.render();
-                            
+
                             // Then load the calendar API
                             try {
                                 console.log('Loading Google Calendar API...');
                                 // Try loading without discovery docs first
                                 gapi.client.setApiKey(GOOGLE_CONFIG.apiKey);
-                                
+
                                 // Load the calendar API v3
                                 await new Promise((resolve, reject) => {
                                     gapi.client.load('calendar', 'v3', (error) => {
@@ -2096,9 +2106,9 @@
                                         }
                                     });
                                 });
-                                
+
                                 console.log('Google Calendar API loaded successfully');
-                                
+
                                 // Test the connection by making a simple API call
                                 try {
                                     console.log('Testing calendar access...');
@@ -2110,7 +2120,7 @@
                                         }
                                     });
                                     console.log('Calendar access verified - timezone:', testResponse.result);
-                                    
+
                                     // Show success message
                                     alert('Successfully connected to Google Calendar!');
                                 } catch (testError) {
@@ -2118,10 +2128,10 @@
                                     // Don't fail the whole connection if just the test fails
                                     console.log('Connection may still work for creating events');
                                 }
-                                
+
                             } catch (error) {
                                 console.error('Error loading Calendar API:', error);
-                                
+
                                 // Try alternative approach without API key
                                 try {
                                     console.log('Trying alternative Calendar API loading method...');
@@ -2149,7 +2159,7 @@
                             resolve();
                             return;
                         }
-                        
+
                         gapi.load('client', async () => {
                             try {
                                 await gapi.client.init({
@@ -2178,7 +2188,7 @@
 
                 try {
                     // Request an access token
-                    this.tokenClient.requestAccessToken({prompt: 'consent'});
+                    this.tokenClient.requestAccessToken({ prompt: 'consent' });
                 } catch (error) {
                     console.error('Error requesting access token:', error);
                     alert('Failed to connect to Google Calendar. Please try again.');
@@ -2231,7 +2241,7 @@
                 });
 
                 const customer = this.state.customers.find(c => c.id === activity.customerId);
-                const opportunity = activity.opportunityId ? 
+                const opportunity = activity.opportunityId ?
                     this.state.opportunities.find(o => o.id === activity.opportunityId) : null;
 
                 // Convert time to RFC3339 format
@@ -2243,12 +2253,12 @@
 
                 // Build rich description with all relevant CRM information
                 let description = '';
-                
+
                 // Add activity notes if present
                 if (activity.notes) {
                     description += `📝 Notes:\n${activity.notes}\n\n`;
                 }
-                
+
                 // Add customer details section
                 description += '👤 Customer Information:\n';
                 description += `• Company: ${customer?.name || 'Unknown'}\n`;
@@ -2266,17 +2276,17 @@
                     description += `• Phone: ${customer?.phone || 'N/A'}\n`;
                 }
                 description += `• Industry: ${customer?.industry || 'N/A'}\n`;
-                
+
                 // Add preferred contact method if available
                 if (customer?.preferredContact) {
                     description += `• Preferred Contact: ${customer.preferredContact}\n`;
                 }
-                
+
                 // Add products of interest if available
                 if (customer?.primaryProducts && customer.primaryProducts.length > 0) {
                     description += `• Products of Interest: ${customer.primaryProducts.join(', ')}\n`;
                 }
-                
+
                 // Add opportunity details if linked
                 if (opportunity) {
                     description += `\n💰 Opportunity Details:\n`;
@@ -2285,12 +2295,12 @@
                     description += `• Stage: ${this.pipelineStages.find(s => s.id === opportunity.stage)?.name || opportunity.stage}\n`;
                     description += `• Expected Close: ${opportunity.expectedClose || 'Not set'}\n`;
                 }
-                
+
                 // Add activity metadata
                 description += `\n📅 Activity Details:\n`;
                 description += `• Type: ${activity.type.charAt(0).toUpperCase() + activity.type.slice(1)}\n`;
                 description += `• Pipeline Stage: ${this.customerStages.find(s => s.id === activity.pipelineStage)?.name || activity.pipelineStage}\n`;
-                
+
                 // Add footer
                 description += '\n---\n🔧 Created from Major Metals CRM';
 
@@ -2298,13 +2308,13 @@
                 const event = {
                     // 'summary' is the event title in Google Calendar - NOW includes customer name
                     summary: `${activity.subject} - ${customer?.name || 'Unknown Customer'}`,
-                    
+
                     // 'description' is the event body/notes with rich formatting
                     description: description,
-                    
+
                     // Location - add company address if available, otherwise company name
                     location: customer?.address || customer?.name || '',
-                    
+
                     // Start and end times
                     start: {
                         dateTime: `${activity.date}T${startTime}:00`,
@@ -2314,19 +2324,19 @@
                         dateTime: `${activity.date}T${endTime}:00`,
                         timeZone: timeZone
                     },
-                    
+
                     // Set reminders based on activity type
                     reminders: {
                         useDefault: false,
                         overrides: activity.type === 'meeting' ? [
-                            {method: 'popup', minutes: 60},
-                            {method: 'email', minutes: 1440} // 24 hours
+                            { method: 'popup', minutes: 60 },
+                            { method: 'email', minutes: 1440 } // 24 hours
                         ] : [
-                            {method: 'popup', minutes: 30},
-                            {method: 'email', minutes: 60}
+                            { method: 'popup', minutes: 30 },
+                            { method: 'email', minutes: 60 }
                         ]
                     },
-                    
+
                     // Add attendees if we have customer email
                     attendees: (() => {
                         const attendees = [];
@@ -2350,14 +2360,14 @@
                         }
                         return attendees;
                     })(),
-                    
+
                     // Color coding based on activity type
                     // Google Calendar color IDs: https://developers.google.com/calendar/api/v3/reference/colors
                     colorId: activity.type === 'call' ? '2' : // Bold green for calls
-                             activity.type === 'meeting' ? '5' : // Bold yellow for meetings  
-                             activity.type === 'email' ? '7' : // Bold blue for emails
-                             '1', // Default blue for others
-                    
+                        activity.type === 'meeting' ? '5' : // Bold yellow for meetings  
+                            activity.type === 'email' ? '7' : // Bold blue for emails
+                                '1', // Default blue for others
+
                     // Add conference data for meetings if needed
                     conferenceData: activity.type === 'meeting' ? {
                         createRequest: {
@@ -2374,7 +2384,7 @@
                     calendarId: 'primary',
                     resource: event
                 };
-                
+
                 if (activity.type === 'meeting') {
                     requestParams.conferenceDataVersion = 1;
                 }
@@ -2385,14 +2395,14 @@
                     if (response.status === 200 || response.result) {
                         activity.googleCalendarId = response.result.id;
                         activity.googleCalendarLink = response.result.htmlLink;
-                        
+
                         // Store conference link if created
                         if (response.result.conferenceData && response.result.conferenceData.entryPoints) {
                             activity.meetingLink = response.result.conferenceData.entryPoints[0].uri;
                         }
-                        
+
                         this.saveAllToLocalStorage();
-                        
+
                         if (this.state.firebaseDb && this.state.isOnline) {
                             await this.state.firebaseDb.ref(`activities/${activity.id}`).set(activity);
                         }
@@ -2750,7 +2760,7 @@
                     totalPipeline: openOpportunities.reduce((sum, o) => sum + (o.value || 0), 0),
                     wonDeals: this.state.opportunities.filter(o => o.stage === 'won').reduce((sum, o) => sum + (o.value || 0), 0),
                     activeCustomers: this.state.customers.filter(c => c.status === 'active').length,
-                    winRate: this.state.opportunities.length > 0 
+                    winRate: this.state.opportunities.length > 0
                         ? Math.round((this.state.opportunities.filter(o => o.stage === 'won').length / this.state.opportunities.length) * 100)
                         : 0
                 };
@@ -2772,23 +2782,23 @@
                 const results = {
                     customers: this.state.customers.filter(c => {
                         const matchName = c.name?.toLowerCase().includes(term);
-                        const matchContacts = c.contacts?.some(contact => 
+                        const matchContacts = c.contacts?.some(contact =>
                             contact.name?.toLowerCase().includes(term) ||
                             contact.email?.toLowerCase().includes(term)
                         );
-                        const matchLegacy = c.contact?.toLowerCase().includes(term) || 
-                                          c.email?.toLowerCase().includes(term);
+                        const matchLegacy = c.contact?.toLowerCase().includes(term) ||
+                            c.email?.toLowerCase().includes(term);
                         const matchProducts = c.primaryProducts?.some(p => p.toLowerCase().includes(term));
                         return matchName || matchContacts || matchLegacy || matchProducts;
                     }),
-                    activities: this.state.activities.filter(a => 
+                    activities: this.state.activities.filter(a =>
                         a.subject?.toLowerCase().includes(term) ||
                         a.notes?.toLowerCase().includes(term)
                     ),
-                    opportunities: this.state.opportunities.filter(o => 
+                    opportunities: this.state.opportunities.filter(o =>
                         o.title?.toLowerCase().includes(term)
                     ),
-                    quotes: this.state.quotes.filter(q => 
+                    quotes: this.state.quotes.filter(q =>
                         q.quoteName?.toLowerCase().includes(term) ||
                         q.quoteNumber?.toLowerCase().includes(term)
                     )
@@ -2852,7 +2862,7 @@
 
             async bulkUpdateStage(stage) {
                 const selectedIds = Array.from(this.state.selectedItems);
-                
+
                 for (const id of selectedIds) {
                     const customer = this.state.customers.find(c => c.id === id);
                     if (customer) {
@@ -2862,7 +2872,7 @@
                 }
 
                 this.saveAllToLocalStorage();
-                
+
                 if (this.state.firebaseDb && this.state.isOnline) {
                     for (const id of selectedIds) {
                         const customer = this.state.customers.find(c => c.id === id);
@@ -2881,10 +2891,10 @@
                 if (!confirm(`Delete ${this.state.selectedItems.size} customers?`)) return;
 
                 const selectedIds = Array.from(this.state.selectedItems);
-                
+
                 this.state.customers = this.state.customers.filter(c => !selectedIds.includes(c.id));
                 this.saveAllToLocalStorage();
-                
+
                 if (this.state.firebaseDb && this.state.isOnline) {
                     for (const id of selectedIds) {
                         await this.state.firebaseDb.ref(`customers/${id}`).remove();
@@ -2897,13 +2907,13 @@
             }
 
             exportSelected() {
-                const selectedCustomers = this.state.customers.filter(c => 
+                const selectedCustomers = this.state.customers.filter(c =>
                     this.state.selectedItems.has(c.id)
                 );
 
                 const csv = this.convertToCSV(selectedCustomers);
                 this.downloadCSV(csv, 'customers_export.csv');
-                
+
                 this.state.bulkMode = false;
                 this.state.selectedItems.clear();
                 this.render();
@@ -2943,14 +2953,14 @@
             // Audio Recording
             async startRecording() {
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                    const stream = await navigator.mediaDevices.getUserMedia({
                         audio: {
                             echoCancellation: true,
                             noiseSuppression: true,
                             sampleRate: 44100
-                        } 
+                        }
                     });
-                    
+
                     // Determine the best MIME type
                     const mimeTypes = [
                         'audio/webm;codecs=opus',
@@ -2958,7 +2968,7 @@
                         'audio/mp4',
                         'audio/ogg;codecs=opus'
                     ];
-                    
+
                     let selectedMimeType = '';
                     for (const mimeType of mimeTypes) {
                         if (MediaRecorder.isTypeSupported(mimeType)) {
@@ -2966,39 +2976,39 @@
                             break;
                         }
                     }
-                    
+
                     if (!selectedMimeType) {
                         throw new Error('No supported audio format found');
                     }
-                    
+
                     this.state.audioMimeType = selectedMimeType;
-                    this.state.mediaRecorder = new MediaRecorder(stream, { 
-                        mimeType: selectedMimeType 
+                    this.state.mediaRecorder = new MediaRecorder(stream, {
+                        mimeType: selectedMimeType
                     });
                     this.state.audioChunks = [];
                     this.state.recordingTime = 0;
                     this.state.isRecording = true;
-                    
+
                     this.state.mediaRecorder.ondataavailable = (event) => {
                         if (event.data.size > 0) {
                             this.state.audioChunks.push(event.data);
                         }
                     };
-                    
+
                     this.state.mediaRecorder.onstop = async () => {
-                        const audioBlob = new Blob(this.state.audioChunks, { 
-                            type: this.state.audioMimeType 
+                        const audioBlob = new Blob(this.state.audioChunks, {
+                            type: this.state.audioMimeType
                         });
-                        
+
                         // Stop all tracks to release microphone
                         stream.getTracks().forEach(track => track.stop());
-                        
+
                         await this.saveAudioRecording(audioBlob);
                         this.render();
                     };
-                    
+
                     this.state.mediaRecorder.start();
-                    
+
                     // Start timer
                     this.state.recordingTimer = setInterval(() => {
                         this.state.recordingTime++;
@@ -3009,7 +3019,7 @@
                             timeElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
                         }
                     }, 1000);
-                    
+
                     this.render();
                 } catch (error) {
                     console.error('Error starting recording:', error);
@@ -3027,12 +3037,12 @@
                 if (this.state.mediaRecorder && this.state.isRecording) {
                     this.state.mediaRecorder.stop();
                     this.state.isRecording = false;
-                    
+
                     if (this.state.recordingTimer) {
                         clearInterval(this.state.recordingTimer);
                         this.state.recordingTimer = null;
                     }
-                    
+
                     this.render();
                 }
             }
@@ -3059,7 +3069,7 @@
                     const fileExtension = this.state.audioMimeType ? this.state.audioMimeType.split('/')[1] : 'webm';
                     const fileName = `activities/audio/${timestamp}_recording.${fileExtension}`;
                     const storageRef = this.state.firebaseStorage.ref(fileName);
-                    
+
                     const metadata = {
                         contentType: this.state.audioMimeType || 'audio/webm',
                         customMetadata: {
@@ -3067,11 +3077,11 @@
                             recordedAt: new Date().toISOString()
                         }
                     };
-                    
+
                     console.log('Uploading audio to Firebase Storage...');
                     const snapshot = await storageRef.put(audioBlob, metadata);
                     const downloadURL = await snapshot.ref.getDownloadURL();
-                    
+
                     this.state.formData.audioRecording = {
                         url: downloadURL,
                         duration: this.state.recordingTime,
@@ -3087,120 +3097,120 @@
                 }
             }
 
-        // File Upload
-        async handleFileUpload(event, customerId) {
-            const file = event.target.files[0];
-            if (!file || file.type !== 'application/pdf') {
-                alert('Please select a PDF file');
-                return;
-            }
-
-            if (file.size > 10 * 1024 * 1024) { // 10MB limit
-                alert('File size must be less than 10MB');
-                return;
-            }
-
-            // NEW: Add authentication check
-            // NEW: Add authentication check
-if (!window.firebase.auth().currentUser) {
-    if (confirm('You need to sign in to upload files. Create a temporary account?')) {
-        try {
-            await window.firebase.auth().signInAnonymously();
-            console.log('Signed in anonymously for upload');
-        } catch (error) {
-            alert('Could not create temporary account: ' + error.message);
-            return;
-        }
-    } else {
-        return;
-    }
-}
-
-            this.state.uploadingFile = true;
-            this.render();
-
-            try {
-                if (this.state.firebaseStorage && this.state.isOnline) {
-                    const timestamp = Date.now();
-                    const fileName = `customers/${customerId || 'temp'}/${timestamp}_${file.name}`;
-                    const storageRef = this.state.firebaseStorage.ref(fileName);
-
-                    const snapshot = await storageRef.put(file);
-                    const downloadURL = await snapshot.ref.getDownloadURL();
-
-                    // Add file info to customer or form data
-                    const target = customerId ?
-                        this.state.customers.find(c => c.id === customerId) :
-                        this.state.formData;
-
-                    if (!target.attachments) {
-                        target.attachments = [];
-                    }
-
-                    target.attachments.push({
-                        id: timestamp.toString(),
-                        name: file.name,
-                        url: downloadURL,
-                        uploadedAt: new Date().toISOString(),
-                        size: file.size
-                    });
-
-                    if (customerId) {
-                        // Update existing customer
-                        this.saveAllToLocalStorage();
-
-                        if (this.state.firebaseDb) {
-                            await this.state.firebaseDb.ref(`customers/${customerId}`).set(
-                                this.state.customers.find(c => c.id === customerId)
-                            );
-                        }
-                    }
-
-                    alert('File uploaded successfully');
-                    this.render();
-                } else {
-                    alert('File upload requires online connection and Firebase configuration');
+            // File Upload
+            async handleFileUpload(event, customerId) {
+                const file = event.target.files[0];
+                if (!file || file.type !== 'application/pdf') {
+                    alert('Please select a PDF file');
+                    return;
                 }
-            } catch (error) {
-                console.error('Error uploading file:', error);
-                alert('Error uploading file. Please try again.');
-            } finally {
-                this.state.uploadingFile = false;
+
+                if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                    alert('File size must be less than 10MB');
+                    return;
+                }
+
+                // NEW: Add authentication check
+                // NEW: Add authentication check
+                if (!window.firebase.auth().currentUser) {
+                    if (confirm('You need to sign in to upload files. Create a temporary account?')) {
+                        try {
+                            await window.firebase.auth().signInAnonymously();
+                            console.log('Signed in anonymously for upload');
+                        } catch (error) {
+                            alert('Could not create temporary account: ' + error.message);
+                            return;
+                        }
+                    } else {
+                        return;
+                    }
+                }
+
+                this.state.uploadingFile = true;
                 this.render();
+
+                try {
+                    if (this.state.firebaseStorage && this.state.isOnline) {
+                        const timestamp = Date.now();
+                        const fileName = `customers/${customerId || 'temp'}/${timestamp}_${file.name}`;
+                        const storageRef = this.state.firebaseStorage.ref(fileName);
+
+                        const snapshot = await storageRef.put(file);
+                        const downloadURL = await snapshot.ref.getDownloadURL();
+
+                        // Add file info to customer or form data
+                        const target = customerId ?
+                            this.state.customers.find(c => c.id === customerId) :
+                            this.state.formData;
+
+                        if (!target.attachments) {
+                            target.attachments = [];
+                        }
+
+                        target.attachments.push({
+                            id: timestamp.toString(),
+                            name: file.name,
+                            url: downloadURL,
+                            uploadedAt: new Date().toISOString(),
+                            size: file.size
+                        });
+
+                        if (customerId) {
+                            // Update existing customer
+                            this.saveAllToLocalStorage();
+
+                            if (this.state.firebaseDb) {
+                                await this.state.firebaseDb.ref(`customers/${customerId}`).set(
+                                    this.state.customers.find(c => c.id === customerId)
+                                );
+                            }
+                        }
+
+                        alert('File uploaded successfully');
+                        this.render();
+                    } else {
+                        alert('File upload requires online connection and Firebase configuration');
+                    }
+                } catch (error) {
+                    console.error('Error uploading file:', error);
+                    alert('Error uploading file. Please try again.');
+                } finally {
+                    this.state.uploadingFile = false;
+                    this.render();
+                }
             }
-        }
 
             async deleteAttachment(customerId, attachmentId) {
                 if (!confirm('Are you sure you want to delete this attachment?')) return;
-                
-                const customer = customerId ? 
-                    this.state.customers.find(c => c.id === customerId) : 
+
+                const customer = customerId ?
+                    this.state.customers.find(c => c.id === customerId) :
                     this.state.formData;
-                    
+
                 if (!customer || !customer.attachments) return;
-                
+
                 const attachment = customer.attachments.find(a => a.id === attachmentId);
                 if (!attachment) return;
-                
+
                 try {
                     // Delete from Firebase Storage
                     if (this.state.firebaseStorage && this.state.isOnline && attachment.url) {
                         const storageRef = this.state.firebaseStorage.refFromURL(attachment.url);
                         await storageRef.delete();
                     }
-                    
+
                     // Remove from customer data
                     customer.attachments = customer.attachments.filter(a => a.id !== attachmentId);
-                    
+
                     if (customerId) {
                         // Update localStorage and Firebase
                         this.saveAllToLocalStorage();
-                        
+
                         if (this.state.firebaseDb && this.state.isOnline) {
                             await this.state.firebaseDb.ref(`customers/${customerId}`).set(customer);
                         }
                     }
-                    
+
                     this.render();
                 } catch (error) {
                     console.error('Error deleting attachment:', error);
@@ -3213,14 +3223,14 @@ if (!window.firebase.auth().currentUser) {
                 if (!this.state.formData.contacts) {
                     this.state.formData.contacts = [];
                 }
-                
+
                 this.state.formData.contacts.push({
                     name: '',
                     email: '',
                     cell: '',
                     title: ''
                 });
-                
+
                 this.render();
             }
 
@@ -3235,11 +3245,11 @@ if (!window.firebase.auth().currentUser) {
                 if (!this.state.formData.contacts) {
                     this.state.formData.contacts = [];
                 }
-                
+
                 if (!this.state.formData.contacts[index]) {
                     this.state.formData.contacts[index] = {};
                 }
-                
+
                 this.state.formData.contacts[index][field] = value;
             }
 
@@ -3248,8 +3258,8 @@ if (!window.firebase.auth().currentUser) {
                 const newCustomer = {
                     id: Date.now().toString(),
                     ...this.state.formData,
-                    industry: this.state.formData.industry === 'Other' 
-                        ? (this.state.formData.customIndustry || 'Other') 
+                    industry: this.state.formData.industry === 'Other'
+                        ? (this.state.formData.customIndustry || 'Other')
                         : this.state.formData.industry,
                     status: this.state.formData.status || 'prospect',
                     pipelineStage: this.state.formData.pipelineStage || 'lead',
@@ -3269,24 +3279,24 @@ if (!window.firebase.auth().currentUser) {
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
                 };
-                
+
                 delete newCustomer.customIndustry;
-                
+
                 this.state.customers.push(newCustomer);
                 this.saveAllToLocalStorage();
-                
+
                 if (this.state.firebaseDb && this.state.isOnline) {
                     this.state.firebaseDb.ref(`customers/${newCustomer.id}`).set(newCustomer);
                 }
-                
+
                 this.closeModal();
             }
 
             handleUpdateCustomer() {
                 const updatedData = {
                     ...this.state.formData,
-                    industry: this.state.formData.industry === 'Other' 
-                        ? (this.state.formData.customIndustry || 'Other') 
+                    industry: this.state.formData.industry === 'Other'
+                        ? (this.state.formData.customIndustry || 'Other')
                         : this.state.formData.industry,
                     primaryProducts: this.state.formData.primaryProducts || [],
                     preferredContact: this.state.formData.preferredContact || 'Any',
@@ -3302,9 +3312,9 @@ if (!window.firebase.auth().currentUser) {
                     email: this.state.formData.contacts?.[0]?.email || this.state.formData.email || '',
                     phone: this.state.formData.contacts?.[0]?.cell || this.state.formData.phone || ''
                 };
-                
+
                 delete updatedData.customIndustry;
-                
+
                 const index = this.state.customers.findIndex(c => c.id === this.state.editingCustomer.id);
                 if (index !== -1) {
                     this.state.customers[index] = {
@@ -3312,15 +3322,15 @@ if (!window.firebase.auth().currentUser) {
                         ...updatedData,
                         updatedAt: new Date().toISOString()
                     };
-                    
+
                     this.saveAllToLocalStorage();
-                    
+
                     if (this.state.firebaseDb && this.state.isOnline) {
                         this.state.firebaseDb.ref(`customers/${this.state.editingCustomer.id}`)
                             .set(this.state.customers[index]);
                     }
                 }
-                
+
                 this.closeModal();
             }
 
@@ -3329,13 +3339,13 @@ if (!window.firebase.auth().currentUser) {
                     this.state.customers = this.state.customers.filter(c => c.id !== customerId);
                     this.state.opportunities = this.state.opportunities.filter(o => o.customerId !== customerId);
                     this.state.activities = this.state.activities.filter(a => a.customerId !== customerId);
-                    
+
                     this.saveAllToLocalStorage();
-                    
+
                     if (this.state.firebaseDb && this.state.isOnline) {
                         this.state.firebaseDb.ref(`customers/${customerId}`).remove();
                     }
-                    
+
                     this.render();
                 }
             }
@@ -3348,14 +3358,14 @@ if (!window.firebase.auth().currentUser) {
                     salesRep: 'Kaleb Smith',
                     createdAt: new Date().toISOString()
                 };
-                
+
                 this.state.opportunities.push(newOpportunity);
                 this.saveAllToLocalStorage();
-                
+
                 if (this.state.firebaseDb && this.state.isOnline) {
                     this.state.firebaseDb.ref(`opportunities/${newOpportunity.id}`).set(newOpportunity);
                 }
-                
+
                 this.closeModal();
             }
 
@@ -3368,14 +3378,14 @@ if (!window.firebase.auth().currentUser) {
                     status: 'draft',
                     createdAt: new Date().toISOString()
                 };
-                
+
                 this.state.quotes.push(newQuote);
                 this.saveAllToLocalStorage();
-                
+
                 if (this.state.firebaseDb && this.state.isOnline) {
                     this.state.firebaseDb.ref(`quotes/${newQuote.id}`).set(newQuote);
                 }
-                
+
                 this.closeModal();
             }
 
@@ -3388,9 +3398,9 @@ if (!window.firebase.auth().currentUser) {
                             ...this.state.formData,
                             updatedAt: new Date().toISOString()
                         };
-                        
+
                         this.saveAllToLocalStorage();
-                        
+
                         if (this.state.firebaseDb && this.state.isOnline) {
                             await this.state.firebaseDb.ref(`activities/${this.state.editingActivity.id}`)
                                 .set(this.state.activities[index]);
@@ -3402,30 +3412,30 @@ if (!window.firebase.auth().currentUser) {
                         ...this.state.formData,
                         completed: false,
                         followUpCreated: false,
-                        pipelineStage: this.state.formData.pipelineStage || 
+                        pipelineStage: this.state.formData.pipelineStage ||
                             this.state.customers.find(c => c.id === this.state.formData.customerId)?.pipelineStage || 'lead',
                         createdAt: new Date().toISOString()
                     };
-                    
+
                     // Handle local audio data upload if online
                     if (newActivity.audioRecording && newActivity.audioRecording.localData && this.state.firebaseStorage && this.state.isOnline) {
                         try {
                             // Convert base64 back to blob and upload
                             const response = await fetch(newActivity.audioRecording.localData);
                             const blob = await response.blob();
-                            
+
                             const timestamp = Date.now();
                             const fileExtension = newActivity.audioRecording.mimeType ? newActivity.audioRecording.mimeType.split('/')[1] : 'webm';
                             const fileName = `activities/audio/${timestamp}_recording.${fileExtension}`;
                             const storageRef = this.state.firebaseStorage.ref(fileName);
-                            
+
                             const metadata = {
                                 contentType: newActivity.audioRecording.mimeType || 'audio/webm'
                             };
-                            
+
                             const snapshot = await storageRef.put(blob, metadata);
                             const downloadURL = await snapshot.ref.getDownloadURL();
-                            
+
                             // Replace local data with URL
                             newActivity.audioRecording = {
                                 url: downloadURL,
@@ -3437,10 +3447,10 @@ if (!window.firebase.auth().currentUser) {
                             console.error('Error uploading local audio:', error);
                         }
                     }
-                    
+
                     this.state.activities.push(newActivity);
                     this.saveAllToLocalStorage();
-                    
+
                     if (this.state.firebaseDb && this.state.isOnline) {
                         await this.state.firebaseDb.ref(`activities/${newActivity.id}`).set(newActivity);
                     }
@@ -3449,7 +3459,7 @@ if (!window.firebase.auth().currentUser) {
                         await this.addToGoogleCalendar(newActivity);
                     }
                 }
-                
+
                 this.closeModal();
             }
 
@@ -3458,13 +3468,13 @@ if (!window.firebase.auth().currentUser) {
                 if (activity) {
                     activity.completed = true;
                     activity.completedDate = new Date().toISOString();
-        
+
                     this.saveAllToLocalStorage();
-        
+
                     if (this.state.firebaseDb && this.state.isOnline) {
                         this.state.firebaseDb.ref(`activities/${activity.id}`).set(activity);
                     }
-        
+
                     this.state.showFollowUp = activity;
                     this.render();
                 }
@@ -3484,17 +3494,17 @@ if (!window.firebase.auth().currentUser) {
                     pipelineStage: followUpData.pipelineStage,
                     createdAt: new Date().toISOString()
                 };
-                
+
                 this.state.activities.push(newActivity);
                 originalActivity.followUpCreated = true;
-                
+
                 this.saveAllToLocalStorage();
-                
+
                 if (this.state.firebaseDb && this.state.isOnline) {
                     this.state.firebaseDb.ref(`activities/${newActivity.id}`).set(newActivity);
                     this.state.firebaseDb.ref(`activities/${originalActivity.id}`).set(originalActivity);
                 }
-                
+
                 this.state.showFollowUp = null;
                 this.render();
             }
@@ -3522,11 +3532,11 @@ if (!window.firebase.auth().currentUser) {
                 if (confirm('Delete this activity?')) {
                     this.state.activities = this.state.activities.filter(a => a.id !== id);
                     this.saveAllToLocalStorage();
-                    
+
                     if (this.state.firebaseDb && this.state.isOnline) {
                         this.state.firebaseDb.ref(`activities/${id}`).remove();
                     }
-                    
+
                     this.render();
                 }
             }
@@ -3606,14 +3616,14 @@ if (!window.firebase.auth().currentUser) {
                 if (!this.state.formData.primaryProducts) {
                     this.state.formData.primaryProducts = [];
                 }
-                
+
                 const index = this.state.formData.primaryProducts.indexOf(product);
                 if (index > -1) {
                     this.state.formData.primaryProducts.splice(index, 1);
                 } else {
                     this.state.formData.primaryProducts.push(product);
                 }
-                
+
                 this.render();
             }
 
@@ -3679,7 +3689,7 @@ if (!window.firebase.auth().currentUser) {
             }
 
             handleModalSubmit() {
-                switch(this.state.showModal) {
+                switch (this.state.showModal) {
                     case 'customer':
                         if (this.state.editingCustomer) {
                             this.handleUpdateCustomer();
@@ -3718,20 +3728,20 @@ if (!window.firebase.auth().currentUser) {
                 event.preventDefault();
                 const oppId = event.dataTransfer.getData('opportunityId');
                 const opportunity = this.state.opportunities.find(o => o.id === oppId);
-                
+
                 if (opportunity) {
                     opportunity.stage = newStage;
                     opportunity.updatedAt = new Date().toISOString();
-                    
+
                     this.saveAllToLocalStorage();
-                    
+
                     if (this.state.firebaseDb && this.state.isOnline) {
                         this.state.firebaseDb.ref(`opportunities/${oppId}`).set(opportunity);
                     }
-                    
+
                     this.render();
                 }
-                
+
                 document.querySelectorAll('.dragging').forEach(el => {
                     el.classList.remove('dragging');
                 });
@@ -3756,12 +3766,12 @@ if (!window.firebase.auth().currentUser) {
                     notes: document.getElementById('followup-notes').value,
                     pipelineStage: document.getElementById('followup-stage').value
                 };
-                
+
                 if (!followUpData.subject) {
                     alert('Please enter a subject');
                     return;
                 }
-                
+
                 this.createFollowUp(this.state.showFollowUp, followUpData);
             }
 
@@ -3789,7 +3799,7 @@ if (!window.firebase.auth().currentUser) {
             render() {
                 const app = document.getElementById('app');
                 if (!app) return;
-                
+
                 app.innerHTML = `
                     <div class="flex min-h-screen bg-gray-100">
                         ${this.renderNavigation()}
@@ -3802,15 +3812,15 @@ if (!window.firebase.auth().currentUser) {
                         ${this.renderModals()}
                     </div>
                 `;
-                    const btn = document.getElementById("connectMicrosoftBtn");
-                    if (btn) {
-                        btn.addEventListener("click", this.connectToMicrosoft.bind(this));
-                    }
-                
+                const btn = document.getElementById("connectMicrosoftBtn");
+                if (btn) {
+                    btn.addEventListener("click", this.connectToMicrosoft.bind(this));
+                }
+
             }
 
             renderActiveView() {
-                switch(this.state.activeView) {
+                switch (this.state.activeView) {
                     case 'dashboard':
                         return this.renderDashboard();
                     case 'customers':
@@ -3849,8 +3859,7 @@ if (!window.firebase.auth().currentUser) {
                     ` : ''}
                     
                     <!-- Navigation Sidebar -->
-                    <div class="bg-gray-900 text-white w-64 min-h-screen p-4 flex flex-col fixed lg:static lg:translate-x-0 transition-transform z-40 ${
-                        this.state.mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+                    <div class="bg-gray-900 text-white w-64 min-h-screen p-4 flex flex-col fixed lg:static lg:translate-x-0 transition-transform z-40 ${this.state.mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
                     }" style="padding-top: ${this.state.mobileMenuOpen ? '80px' : '16px'}">
                         <div class="mb-8 hidden lg:block">
                             <h1 class="text-2xl font-bold">Major Metals CRM</h1>
@@ -3875,14 +3884,14 @@ if (!window.firebase.auth().currentUser) {
                         </div>
                         <nav class="space-y-2 flex-1 overflow-y-auto" style="max-height: calc(100vh - 250px);">
                             ${[
-                                { id: 'dashboard', icon: 'BarChart3', label: 'Dashboard' },
-                                { id: 'customers', icon: 'Users', label: 'Customers' },
-                                { id: 'pipeline', icon: 'TrendingUp', label: 'Sales Pipeline' },
-                                { id: 'quotes', icon: 'FileText', label: 'Quotes' },
-                                { id: 'activities', icon: 'Calendar', label: 'Activities' },
-                                { id: 'market-intelligence', icon: 'TrendingUp', label: 'Market Intel' },
-                                { id: 'excel', icon: 'FileText', label: 'Tube Quoter' }
-                            ].map(item => `
+                        { id: 'dashboard', icon: 'BarChart3', label: 'Dashboard' },
+                        { id: 'customers', icon: 'Users', label: 'Customers' },
+                        { id: 'pipeline', icon: 'TrendingUp', label: 'Sales Pipeline' },
+                        { id: 'quotes', icon: 'FileText', label: 'Quotes' },
+                        { id: 'activities', icon: 'Calendar', label: 'Activities' },
+                        { id: 'market-intelligence', icon: 'TrendingUp', label: 'Market Intel' },
+                        { id: 'excel', icon: 'FileText', label: 'Tube Quoter' }
+                    ].map(item => `
                                 <button 
                                     onclick="app.setView('${item.id}')"
                                     class="w-full flex items-center space-x-3 px-4 py-2 rounded-lg transition-colors
@@ -3897,17 +3906,17 @@ if (!window.firebase.auth().currentUser) {
                         <div class="mt-8 pt-8 border-t border-gray-800">
                             <div class="flex items-center justify-between mb-2">
                                 <div class="flex items-center space-x-2">
-                                    ${this.state.isOnline ? 
-                                        this.icon('Cloud', 16, 'text-green-500') : 
-                                        this.icon('CloudOff', 16, 'text-red-500')
-                                    }
+                                    ${this.state.isOnline ?
+                        this.icon('Cloud', 16, 'text-green-500') :
+                        this.icon('CloudOff', 16, 'text-red-500')
+                    }
                                     <span class="text-xs text-gray-400">
                                         ${this.state.isOnline ? 'Online' : 'Offline'}
                                     </span>
                                 </div>
-                                ${this.state.isSyncing ? 
-                                    this.icon('RefreshCw', 16, 'text-blue-500 animate-spin') : ''
-                                }
+                                ${this.state.isSyncing ?
+                        this.icon('RefreshCw', 16, 'text-blue-500 animate-spin') : ''
+                    }
                             </div>
                             ${this.state.lastSync ? `
                                 <p class="text-xs text-gray-500">
@@ -3918,7 +3927,7 @@ if (!window.firebase.auth().currentUser) {
                     </div>
                 `;
             }
-            
+
             renderGlobalSearchResults() {
                 const results = this.state.globalSearchResults;
                 const hasResults = Object.values(results).some(arr => arr.length > 0);
@@ -4021,19 +4030,18 @@ if (!window.firebase.auth().currentUser) {
                                 ` : `
                                     <div class="space-y-3">
                                         ${this.state.activities
-                                            .filter(a => this.state.showCompletedActivities || !a.completed)
-                                            .sort((a, b) => new Date(b.date) - new Date(a.date))
-                                            .slice(0, 5)
-                                            .map(activity => {
-                                                const customer = this.state.customers.find(c => c.id === activity.customerId);
-                                                return `
-                                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded ${
-                                                        activity.completed ? 'cursor-pointer hover:bg-gray-100' : ''
-                                                    }" ${activity.completed ? `onclick="app.viewActivity('${activity.id}')"` : ''}>
+                        .filter(a => this.state.showCompletedActivities || !a.completed)
+                        .sort((a, b) => new Date(b.date) - new Date(a.date))
+                        .slice(0, 5)
+                        .map(activity => {
+                            const customer = this.state.customers.find(c => c.id === activity.customerId);
+                            return `
+                                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded ${activity.completed ? 'cursor-pointer hover:bg-gray-100' : ''
+                                }" ${activity.completed ? `onclick="app.viewActivity('${activity.id}')"` : ''}>
                                                         <div class="flex items-center space-x-3">
                                                             ${activity.type === 'call' ? this.icon('Phone', 16) :
-                                                              activity.type === 'email' ? this.icon('Mail', 16) :
-                                                              this.icon('Calendar', 16)}
+                                    activity.type === 'email' ? this.icon('Mail', 16) :
+                                        this.icon('Calendar', 16)}
                                                             <div>
                                                                 <p class="font-medium text-sm">${activity.subject}</p>
                                                                 <p class="text-xs">
@@ -4047,12 +4055,12 @@ if (!window.firebase.auth().currentUser) {
                                                             </div>
                                                         </div>
                                                         ${activity.completed ?
-                                                            this.icon('Check', 16, 'text-green-500') :
-                                                            this.icon('Clock', 16, 'text-yellow-500')
-                                                        }
+                                    this.icon('Check', 16, 'text-green-500') :
+                                    this.icon('Clock', 16, 'text-yellow-500')
+                                }
                                                     </div>
                                                 `;
-                                            }).join('')}
+                        }).join('')}
                                     </div>
                                 `}
                             </div>
@@ -4064,12 +4072,12 @@ if (!window.firebase.auth().currentUser) {
                                 ` : `
                                     <div class="space-y-2">
                                         ${this.state.opportunities
-                                            .filter(o => o.stage !== 'won' && o.stage !== 'lost')
-                                            .sort((a, b) => (b.value || 0) - (a.value || 0))
-                                            .slice(0, 5)
-                                            .map(opp => {
-                                                const customer = this.state.customers.find(c => c.id === opp.customerId);
-                                                return `
+                        .filter(o => o.stage !== 'won' && o.stage !== 'lost')
+                        .sort((a, b) => (b.value || 0) - (a.value || 0))
+                        .slice(0, 5)
+                        .map(opp => {
+                            const customer = this.state.customers.find(c => c.id === opp.customerId);
+                            return `
                                                     <div class="p-3 bg-gray-50 rounded">
                                                         <div class="flex justify-between items-start">
                                                             <div>
@@ -4080,7 +4088,7 @@ if (!window.firebase.auth().currentUser) {
                                                         </div>
                                                     </div>
                                                 `;
-                                            }).join('')}
+                        }).join('')}
                                     </div>
                                 `}
                             </div>
@@ -4093,7 +4101,7 @@ if (!window.firebase.auth().currentUser) {
                     </div>
                 `;
             }
-            
+
             renderCustomers() {
                 const filteredCustomers = this.state.customers.filter(c => {
                     const matchesSearch = c.name.toLowerCase().includes(this.state.searchTerm.toLowerCase());
@@ -4182,9 +4190,9 @@ if (!window.firebase.auth().currentUser) {
                             
                             <div class="divide-y">
                                 ${filteredCustomers.map(customer => {
-                                    const stage = this.customerStages.find(s => s.id === customer.pipelineStage);
-                                    const primaryContact = customer.contacts?.[0] || {};
-                                    return `
+                    const stage = this.customerStages.find(s => s.id === customer.pipelineStage);
+                    const primaryContact = customer.contacts?.[0] || {};
+                    return `
                                         <div class="p-4 hover:bg-gray-50">
                                             <div class="flex items-start justify-between">
                                                 <div class="flex items-start space-x-4">
@@ -4216,9 +4224,8 @@ if (!window.firebase.auth().currentUser) {
                                                             </div>
                                                         ` : ''}
                                                         <div class="mt-2 flex items-center space-x-2">
-                                                            <span class="px-2 py-1 text-xs rounded-full ${
-                                                                customer.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                                                            }">
+                                                            <span class="px-2 py-1 text-xs rounded-full ${customer.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }">
                                                                 ${customer.status}
                                                             </span>
                                                             ${stage ? `
@@ -4262,7 +4269,7 @@ if (!window.firebase.auth().currentUser) {
                                             </div>
                                         </div>
                                     `;
-                                }).join('')}
+                }).join('')}
                             </div>
                         </div>
                     </div>
@@ -4327,10 +4334,10 @@ if (!window.firebase.auth().currentUser) {
                         
                         <div class="flex space-x-4 overflow-x-auto pb-4">
                             ${this.pipelineStages.map(stage => {
-                                const stageOpps = this.state.opportunities.filter(o => o.stage === stage.id);
-                                const stageValue = stageOpps.reduce((sum, o) => sum + (o.value || 0), 0);
-                                
-                                return `
+                    const stageOpps = this.state.opportunities.filter(o => o.stage === stage.id);
+                    const stageValue = stageOpps.reduce((sum, o) => sum + (o.value || 0), 0);
+
+                    return `
                                     <div class="flex-shrink-0 w-72 lg:w-80"
                                          ondragover="event.preventDefault()"
                                          ondrop="app.handleDrop(event, '${stage.id}')">
@@ -4343,10 +4350,10 @@ if (!window.firebase.auth().currentUser) {
                                         
                                         <div class="bg-gray-100 min-h-[400px] p-2">
                                             ${stageOpps.map(opp => {
-                                                const customer = this.state.customers.find(c => c.id === opp.customerId);
-                                                const activities = this.state.activities.filter(a => a.opportunityId === opp.id);
-                                                
-                                                return `
+                        const customer = this.state.customers.find(c => c.id === opp.customerId);
+                        const activities = this.state.activities.filter(a => a.opportunityId === opp.id);
+
+                        return `
                                                     <div draggable="true"
                                                          ondragstart="app.handleDragStart(event, '${opp.id}')"
                                                          class="bg-white p-3 rounded-lg shadow mb-2 cursor-move hover:shadow-md transition-shadow"
@@ -4363,11 +4370,11 @@ if (!window.firebase.auth().currentUser) {
                                                         </div>
                                                     </div>
                                                 `;
-                                            }).join('')}
+                    }).join('')}
                                         </div>
                                     </div>
                                 `;
-                            }).join('')}
+                }).join('')}
                         </div>
                         
                         ${this.renderOpportunityDetailsModal()}
@@ -4377,11 +4384,11 @@ if (!window.firebase.auth().currentUser) {
 
             renderOpportunityDetailsModal() {
                 if (!this.state.selectedOpp) return '';
-                
+
                 const opp = this.state.selectedOpp;
                 const customer = this.state.customers.find(c => c.id === opp.customerId);
                 const activities = this.state.activities.filter(a => a.opportunityId === opp.id);
-                
+
                 return `
                     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
                          onclick="app.closeOpportunityDetails()">
@@ -4422,20 +4429,19 @@ if (!window.firebase.auth().currentUser) {
                                     </div>
                                     <div class="space-y-2 max-h-64 overflow-y-auto">
                                         ${activities
-                                            .filter(a => this.state.showCompletedActivities || !a.completed)
-                                            .map(activity => `
-                                                <div class="p-3 bg-gray-50 rounded ${
-                                                    activity.completed ? 'cursor-pointer hover:bg-gray-100' : ''
-                                                }" ${activity.completed ? `onclick="app.viewActivity('${activity.id}')"` : ''}>
+                        .filter(a => this.state.showCompletedActivities || !a.completed)
+                        .map(activity => `
+                                                <div class="p-3 bg-gray-50 rounded ${activity.completed ? 'cursor-pointer hover:bg-gray-100' : ''
+                            }" ${activity.completed ? `onclick="app.viewActivity('${activity.id}')"` : ''}>
                                                     <div class="flex items-center justify-between">
                                                         <div>
                                                             <p class="font-medium text-sm">${activity.subject}</p>
                                                             <p class="text-xs text-gray-600">${activity.date}</p>
                                                         </div>
-                                                        ${activity.completed ? 
-                                                            this.icon('Check', 16, 'text-green-500') : 
-                                                            this.icon('Clock', 16, 'text-yellow-500')
-                                                        }
+                                                        ${activity.completed ?
+                                this.icon('Check', 16, 'text-green-500') :
+                                this.icon('Clock', 16, 'text-yellow-500')
+                            }
                                                     </div>
                                                 </div>
                                             `).join('')}
@@ -4449,7 +4455,7 @@ if (!window.firebase.auth().currentUser) {
 
             renderQuotes() {
                 const quotes = this.state.quotes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                
+
                 return `
                     <div class="p-4 lg:p-8 mt-16 lg:mt-0">
                         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 lg:mb-8 space-y-4 sm:space-y-0">
@@ -4467,13 +4473,13 @@ if (!window.firebase.auth().currentUser) {
                             ` : `
                                 <div class="space-y-3">
                                     ${quotes.map(quote => {
-                                        const customer = this.state.customers.find(c => c.id === quote.customerId);
-                                        const relatedActivities = this.state.activities.filter(a => 
-                                            a.customerId === quote.customerId && 
-                                            a.notes?.includes(quote.quoteNumber)
-                                        );
-                                        
-                                        return `
+                    const customer = this.state.customers.find(c => c.id === quote.customerId);
+                    const relatedActivities = this.state.activities.filter(a =>
+                        a.customerId === quote.customerId &&
+                        a.notes?.includes(quote.quoteNumber)
+                    );
+
+                    return `
                                             <div class="p-4 border rounded-lg">
                                                 <div class="flex justify-between items-start">
                                                     <div>
@@ -4487,18 +4493,17 @@ if (!window.firebase.auth().currentUser) {
                                                         ` : ''}
                                                     </div>
                                                     <div class="text-right">
-                                                        <span class="px-2 py-1 text-xs rounded-full ${
-                                                            quote.status === 'sent' ? 'bg-blue-100 text-blue-800' :
-                                                            quote.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                                                            'bg-gray-100 text-gray-800'
-                                                        }">
+                                                        <span class="px-2 py-1 text-xs rounded-full ${quote.status === 'sent' ? 'bg-blue-100 text-blue-800' :
+                            quote.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                                'bg-gray-100 text-gray-800'
+                        }">
                                                             ${quote.status}
                                                         </span>
                                                     </div>
                                                 </div>
                                             </div>
                                         `;
-                                    }).join('')}
+                }).join('')}
                                 </div>
                             `}
                         </div>
@@ -4546,12 +4551,11 @@ if (!window.firebase.auth().currentUser) {
                                             ${pipelineStage.name}
                                         </span>
                                     ` : ''}
-                                    <span class="inline-flex items-center px-2 py-1 text-xs rounded-full ${
-                                        customerStatus === 'active' ? 'bg-green-100 text-green-800' : 
-                                        customerStatus === 'prospect' ? 'bg-blue-100 text-blue-800' : 
-                                        customerStatus === 'inactive' ? 'bg-gray-100 text-gray-800' : 
-                                        'bg-gray-100 text-gray-600'
-                                    }">
+                                    <span class="inline-flex items-center px-2 py-1 text-xs rounded-full ${customerStatus === 'active' ? 'bg-green-100 text-green-800' :
+                        customerStatus === 'prospect' ? 'bg-blue-100 text-blue-800' :
+                            customerStatus === 'inactive' ? 'bg-gray-100 text-gray-800' :
+                                'bg-gray-100 text-gray-600'
+                    }">
                                         ${customerStatus}
                                     </span>
                                     ${activity.googleCalendarId ? `
@@ -4645,15 +4649,15 @@ if (!window.firebase.auth().currentUser) {
 
                 // Group activities by time period
                 const todayActivities = filteredActivities.filter(a => !a.completed && a.date === todayStr);
-                const thisWeekActivities = filteredActivities.filter(a => 
-                    !a.completed && 
-                    a.date > todayStr && 
-                    a.date >= thisWeekStartStr && 
+                const thisWeekActivities = filteredActivities.filter(a =>
+                    !a.completed &&
+                    a.date > todayStr &&
+                    a.date >= thisWeekStartStr &&
                     a.date <= thisWeekEndStr
                 );
-                const nextWeekActivities = filteredActivities.filter(a => 
-                    !a.completed && 
-                    a.date >= nextWeekStartStr && 
+                const nextWeekActivities = filteredActivities.filter(a =>
+                    !a.completed &&
+                    a.date >= nextWeekStartStr &&
                     a.date <= nextWeekEndStr
                 );
                 const overdueActivities = filteredActivities.filter(a => !a.completed && a.date < todayStr);
@@ -4830,17 +4834,17 @@ if (!window.firebase.auth().currentUser) {
 
             renderFollowUpModal() {
                 if (!this.state.showFollowUp) return '';
-    
+
                 const activity = this.state.showFollowUp;
                 const customer = this.state.customers.find(c => c.id === activity.customerId);
-    
+
                 const suggestedActions = [
                     { subject: `Follow up on ${activity.subject}`, stage: activity.pipelineStage },
                     { subject: `Check in with ${customer?.name || 'customer'}`, stage: 'qualified' },
                     { subject: 'Send updated quote', stage: 'quote_out' },
                     { subject: 'Schedule product demo', stage: 'negotiating' }
                 ];
-    
+
                 return `
                     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
                          onclick="app.closeFollowUp()">
@@ -4932,7 +4936,7 @@ if (!window.firebase.auth().currentUser) {
             }
 
             renderModals() {
-                switch(this.state.showModal) {
+                switch (this.state.showModal) {
                     case 'customer':
                         return this.renderCustomerModal();
                     case 'customer-details':
@@ -5230,32 +5234,30 @@ if (!window.firebase.auth().currentUser) {
                                         <p class="text-sm text-gray-500">Contact</p>
                                         ${customer.officeNumber ? `<p class="text-sm text-gray-600">Office: ${customer.officeNumber}</p>` : ''}
                                         ${customer.contacts && customer.contacts.length > 0
-                                            ? customer.contacts.map((contact, index) => `
+                        ? customer.contacts.map((contact, index) => `
                                                 <div class="${index > 0 ? 'mt-2 pt-2 border-t' : ''}">
                                                     <p class="font-medium">${contact.name}${contact.title ? ` - ${contact.title}` : ''}</p>
                                                     <p class="text-sm text-gray-600">${contact.email}</p>
                                                     <p class="text-sm text-gray-600">${contact.cell}</p>
                                                 </div>
                                             `).join('')
-                                            : `
+                        : `
                                                 <p class="font-medium">${customer.contact}</p>
                                                 <p class="text-sm text-gray-600">${customer.email}</p>
                                                 <p class="text-sm text-gray-600">${customer.phone}</p>
                                             `
-                                        }
+                    }
                                     </div>
                                     <div>
                                         <p class="text-sm text-gray-500">Status</p>
                                         <div class="mt-1 space-y-1">
-                                            <span class="inline-block px-2 py-1 text-xs rounded-full ${
-                                                customer.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                                            }">
+                                            <span class="inline-block px-2 py-1 text-xs rounded-full ${customer.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                    }">
                                                 ${customer.status}
                                             </span>
                                             ${this.customerStages.find(s => s.id === customer.pipelineStage) ? `
-                                                <span class="inline-block px-2 py-1 text-xs rounded-full text-white ${
-                                                    this.customerStages.find(s => s.id === customer.pipelineStage).color
-                                                }">
+                                                <span class="inline-block px-2 py-1 text-xs rounded-full text-white ${this.customerStages.find(s => s.id === customer.pipelineStage).color
+                        }">
                                                     ${this.customerStages.find(s => s.id === customer.pipelineStage).name}
                                                 </span>
                                             ` : ''}
@@ -5281,17 +5283,16 @@ if (!window.firebase.auth().currentUser) {
                                 <div class="border-b mb-4">
                                     <nav class="flex space-x-8">
                                         ${[
-                                            { id: 'opportunities', label: 'Opportunities', count: opportunities.length },
-                                            { id: 'activities', label: 'Activities', count: activities.length },
-                                            { id: 'quotes', label: 'Quotes', count: quotes.length },
-                                            { id: 'details', label: 'Details', count: null }
-                                        ].map(tab => `
+                        { id: 'opportunities', label: 'Opportunities', count: opportunities.length },
+                        { id: 'activities', label: 'Activities', count: activities.length },
+                        { id: 'quotes', label: 'Quotes', count: quotes.length },
+                        { id: 'details', label: 'Details', count: null }
+                    ].map(tab => `
                                             <button onclick="app.state.customerDetailTab = '${tab.id}'; app.render()"
-                                                    class="pb-2 border-b-2 ${
-                                                        this.state.customerDetailTab === tab.id 
-                                                            ? 'border-blue-600 text-blue-600' 
-                                                            : 'border-transparent text-gray-500 hover:text-gray-700'
-                                                    }">
+                                                    class="pb-2 border-b-2 ${this.state.customerDetailTab === tab.id
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                        }">
                                                 ${tab.label}
                                                 ${tab.count !== null ? `<span class="ml-2 text-sm">(${tab.count})</span>` : ''}
                                             </button>
@@ -5306,15 +5307,15 @@ if (!window.firebase.auth().currentUser) {
             }
 
             renderCustomerDetailTab(customer, opportunities, activities, quotes) {
-                switch(this.state.customerDetailTab) {
+                switch (this.state.customerDetailTab) {
                     case 'opportunities':
                         return `
                             <div class="space-y-3">
                                 ${opportunities.length === 0 ? `
                                     <p class="text-gray-400">No opportunities yet</p>
                                 ` : opportunities.map(opp => {
-                                    const stage = this.pipelineStages.find(s => s.id === opp.stage);
-                                    return `
+                            const stage = this.pipelineStages.find(s => s.id === opp.stage);
+                            return `
                                         <div class="border rounded-lg p-4">
                                             <div class="flex justify-between items-start">
                                                 <div>
@@ -5333,7 +5334,7 @@ if (!window.firebase.auth().currentUser) {
                                             </div>
                                         </div>
                                     `;
-                                }).join('')}
+                        }).join('')}
                             </div>
                         `;
 
@@ -5352,9 +5353,9 @@ if (!window.firebase.auth().currentUser) {
                                 </div>
                                 <div class="space-y-2">
                                     ${activities
-                                        .filter(a => this.state.showCompletedActivities || !a.completed)
-                                        .sort((a, b) => new Date(b.date) - new Date(a.date))
-                                        .map(activity => `
+                                .filter(a => this.state.showCompletedActivities || !a.completed)
+                                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                                .map(activity => `
                                             <div class="border rounded-lg p-3 ${activity.completed ? 'bg-gray-50 cursor-pointer hover:bg-gray-100' : ''}"
                                                  ${activity.completed ? `onclick="app.viewActivity('${activity.id}')"` : ''}>
                                                 <div class="flex justify-between items-start">
@@ -5376,11 +5377,10 @@ if (!window.firebase.auth().currentUser) {
                                                             </div>
                                                         ` : ''}
                                                     </div>
-                                                    <span class="text-xs px-2 py-1 rounded-full ${
-                                                        activity.completed 
-                                                            ? 'bg-green-100 text-green-800' 
-                                                            : 'bg-yellow-100 text-yellow-800'
-                                                    }">
+                                                    <span class="text-xs px-2 py-1 rounded-full ${activity.completed
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-yellow-100 text-yellow-800'
+                                    }">
                                                         ${activity.completed ? 'Completed' : 'Pending'}
                                                     </span>
                                                 </div>
@@ -5405,11 +5405,10 @@ if (!window.firebase.auth().currentUser) {
                                                     Created: ${new Date(quote.createdAt).toLocaleDateString()}
                                                 </p>
                                             </div>
-                                            <span class="px-2 py-1 text-xs rounded-full ${
-                                                quote.status === 'sent' ? 'bg-blue-100 text-blue-800' :
-                                                quote.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                                                'bg-gray-100 text-gray-800'
-                                            }">
+                                            <span class="px-2 py-1 text-xs rounded-full ${quote.status === 'sent' ? 'bg-blue-100 text-blue-800' :
+                                quote.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                                    'bg-gray-100 text-gray-800'
+                            }">
                                                 ${quote.status}
                                             </span>
                                         </div>
@@ -5610,7 +5609,7 @@ if (!window.firebase.auth().currentUser) {
             renderActivityModal() {
                 const isEditing = !!this.state.editingActivity;
                 const title = isEditing ? 'Edit Activity' : 'Schedule Activity';
-                
+
                 return `
                     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
                          onclick="app.closeModal()">
@@ -5750,10 +5749,10 @@ if (!window.firebase.auth().currentUser) {
 
             renderViewActivityModal() {
                 if (!this.state.viewingActivity) return '';
-                
+
                 const activity = this.state.viewingActivity;
                 const customer = this.state.customers.find(c => c.id === activity.customerId);
-                
+
                 return `
                     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
                          onclick="app.closeModal()">
@@ -5790,11 +5789,10 @@ if (!window.firebase.auth().currentUser) {
                                     </div>
                                     <div>
                                         <p class="text-sm text-gray-500">Status</p>
-                                        <span class="inline-block px-2 py-1 text-xs rounded-full ${
-                                            activity.completed 
-                                                ? 'bg-green-100 text-green-800' 
-                                                : 'bg-yellow-100 text-yellow-800'
-                                        }">
+                                        <span class="inline-block px-2 py-1 text-xs rounded-full ${activity.completed
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-yellow-100 text-yellow-800'
+                    }">
                                             ${activity.completed ? 'Completed' : 'Pending'}
                                         </span>
                                     </div>
@@ -5862,9 +5860,10 @@ if (!window.firebase.auth().currentUser) {
                 `;
             }
         }
-// Initialize the app
+        // Initialize the app
         const app = new MajorMetalsCRM();
         window.app = app;
     </script>
 </body>
+
 </html>
