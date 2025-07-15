@@ -2402,11 +2402,7 @@
                             activity.meetingLink = response.result.conferenceData.entryPoints[0].uri;
                         }
 
-<<<<<<< HEAD
-                        this.saveAllToLocalStorage();
-=======
                         this.saveAllToFirebase();
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                         if (this.state.firebaseDb && this.state.isOnline) {
                             await this.state.firebaseDb.ref(`activities/${activity.id}`).set(activity);
@@ -2968,12 +2964,8 @@
             // ✅ UPDATE YOUR BULK OPERATIONS - REPLACE localStorage WITH Firebase:
             async bulkUpdateStage(stage) {
                 const selectedIds = Array.from(this.state.selectedItems);
-<<<<<<< HEAD
-
-=======
                 
                 // Update local state
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
                 for (const id of selectedIds) {
                     const customer = this.state.customers.find(c => c.id === id);
                     if (customer) {
@@ -2982,18 +2974,6 @@
                     }
                 }
 
-<<<<<<< HEAD
-                this.saveAllToLocalStorage();
-
-                if (this.state.firebaseDb && this.state.isOnline) {
-                    for (const id of selectedIds) {
-                        const customer = this.state.customers.find(c => c.id === id);
-                        if (customer) {
-                            await this.state.firebaseDb.ref(`customers/${id}`).set(customer);
-                        }
-                    }
-                }
-=======
                 // Save all updated customers to Firebase
                 const savePromises = selectedIds.map(id => {
                     const customer = this.state.customers.find(c => c.id === id);
@@ -3001,7 +2981,6 @@
                 });
                 
                 await Promise.all(savePromises);
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                 this.state.bulkMode = false;
                 this.state.selectedItems.clear();
@@ -3012,17 +2991,6 @@
                 if (!confirm(`Delete ${this.state.selectedItems.size} customers?`)) return;
 
                 const selectedIds = Array.from(this.state.selectedItems);
-<<<<<<< HEAD
-
-                this.state.customers = this.state.customers.filter(c => !selectedIds.includes(c.id));
-                this.saveAllToLocalStorage();
-
-                if (this.state.firebaseDb && this.state.isOnline) {
-                    for (const id of selectedIds) {
-                        await this.state.firebaseDb.ref(`customers/${id}`).remove();
-                    }
-                }
-=======
                 
                 // Remove from local state
                 this.state.customers = this.state.customers.filter(c => !selectedIds.includes(c.id));
@@ -3030,7 +2998,6 @@
                 // Delete from Firebase
                 const deletePromises = selectedIds.map(id => this.deleteFromFirebase('customers', id));
                 await Promise.all(deletePromises);
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                 this.state.bulkMode = false;
                 this.state.selectedItems.clear();
@@ -3231,11 +3198,7 @@
                 }
             }
 
-<<<<<<< HEAD
-            // File Upload
-=======
             // ✅ UPDATE FILE UPLOAD - REPLACE localStorage WITH Firebase:
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
             async handleFileUpload(event, customerId) {
                 const file = event.target.files[0];
                 if (!file || file.type !== 'application/pdf') {
@@ -3243,21 +3206,12 @@
                     return;
                 }
 
-<<<<<<< HEAD
-                if (file.size > 10 * 1024 * 1024) { // 10MB limit
-=======
                 if (file.size > 10 * 1024 * 1024) {
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
                     alert('File size must be less than 10MB');
                     return;
                 }
 
-<<<<<<< HEAD
-                // NEW: Add authentication check
-                // NEW: Add authentication check
-=======
                 // Ensure authentication
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
                 if (!window.firebase.auth().currentUser) {
                     if (confirm('You need to sign in to upload files. Create a temporary account?')) {
                         try {
@@ -3302,19 +3256,8 @@
                         });
 
                         if (customerId) {
-<<<<<<< HEAD
-                            // Update existing customer
-                            this.saveAllToLocalStorage();
-
-                            if (this.state.firebaseDb) {
-                                await this.state.firebaseDb.ref(`customers/${customerId}`).set(
-                                    this.state.customers.find(c => c.id === customerId)
-                                );
-                            }
-=======
                             // Save updated customer to Firebase
                             await this.saveToFirebase('customers', target);
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
                         }
 
                         alert('File uploaded successfully');
@@ -3355,11 +3298,7 @@
 
                     if (customerId) {
                         // Update localStorage and Firebase
-<<<<<<< HEAD
-                        this.saveAllToLocalStorage();
-=======
                         this.saveAllToFirebase();
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                         if (this.state.firebaseDb && this.state.isOnline) {
                             await this.state.firebaseDb.ref(`customers/${customerId}`).set(customer);
@@ -3438,11 +3377,7 @@
                 delete newCustomer.customIndustry;
 
                 this.state.customers.push(newCustomer);
-<<<<<<< HEAD
-                this.saveAllToLocalStorage();
-=======
                 this.saveAllToFirebase();
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                 if (this.state.firebaseDb && this.state.isOnline) {
                     this.state.firebaseDb.ref(`customers/${newCustomer.id}`).set(newCustomer);
@@ -3481,15 +3416,9 @@
                         ...updatedData,
                         updatedAt: new Date().toISOString()
                     };
-<<<<<<< HEAD
-
-                    this.saveAllToLocalStorage();
-
-=======
                     
                     this.saveAllToFirebase();
                     
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
                     if (this.state.firebaseDb && this.state.isOnline) {
                         this.state.firebaseDb.ref(`customers/${this.state.editingCustomer.id}`)
                             .set(this.state.customers[index]);
@@ -3505,11 +3434,7 @@
                     this.state.opportunities = this.state.opportunities.filter(o => o.customerId !== customerId);
                     this.state.activities = this.state.activities.filter(a => a.customerId !== customerId);
 
-<<<<<<< HEAD
-                    this.saveAllToLocalStorage();
-=======
                     this.saveAllToFirebase();
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                     if (this.state.firebaseDb && this.state.isOnline) {
                         this.state.firebaseDb.ref(`customers/${customerId}`).remove();
@@ -3529,11 +3454,7 @@
                 };
 
                 this.state.opportunities.push(newOpportunity);
-<<<<<<< HEAD
-                this.saveAllToLocalStorage();
-=======
                 this.saveAllToFirebase();
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                 if (this.state.firebaseDb && this.state.isOnline) {
                     this.state.firebaseDb.ref(`opportunities/${newOpportunity.id}`).set(newOpportunity);
@@ -3553,11 +3474,7 @@
                 };
 
                 this.state.quotes.push(newQuote);
-<<<<<<< HEAD
-                this.saveAllToLocalStorage();
-=======
                 this.saveAllToFirebase();
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                 if (this.state.firebaseDb && this.state.isOnline) {
                     this.state.firebaseDb.ref(`quotes/${newQuote.id}`).set(newQuote);
@@ -3575,15 +3492,9 @@
                             ...this.state.formData,
                             updatedAt: new Date().toISOString()
                         };
-<<<<<<< HEAD
-
-                        this.saveAllToLocalStorage();
-
-=======
                         
                         this.saveAllToFirebase();
                         
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
                         if (this.state.firebaseDb && this.state.isOnline) {
                             await this.state.firebaseDb.ref(`activities/${this.state.editingActivity.id}`)
                                 .set(this.state.activities[index]);
@@ -3632,11 +3543,7 @@
                     }
 
                     this.state.activities.push(newActivity);
-<<<<<<< HEAD
-                    this.saveAllToLocalStorage();
-=======
                     this.saveAllToFirebase();
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                     if (this.state.firebaseDb && this.state.isOnline) {
                         await this.state.firebaseDb.ref(`activities/${newActivity.id}`).set(newActivity);
@@ -3656,11 +3563,7 @@
                     activity.completed = true;
                     activity.completedDate = new Date().toISOString();
 
-<<<<<<< HEAD
-                    this.saveAllToLocalStorage();
-=======
                     this.saveAllToFirebase();
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                     if (this.state.firebaseDb && this.state.isOnline) {
                         this.state.firebaseDb.ref(`activities/${activity.id}`).set(activity);
@@ -3689,11 +3592,7 @@
                 this.state.activities.push(newActivity);
                 originalActivity.followUpCreated = true;
 
-<<<<<<< HEAD
-                this.saveAllToLocalStorage();
-=======
                 this.saveAllToFirebase();
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                 if (this.state.firebaseDb && this.state.isOnline) {
                     this.state.firebaseDb.ref(`activities/${newActivity.id}`).set(newActivity);
@@ -3726,11 +3625,7 @@
             deleteActivity(id) {
                 if (confirm('Delete this activity?')) {
                     this.state.activities = this.state.activities.filter(a => a.id !== id);
-<<<<<<< HEAD
-                    this.saveAllToLocalStorage();
-=======
                     this.saveAllToFirebase();
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
 
                     if (this.state.firebaseDb && this.state.isOnline) {
                         this.state.firebaseDb.ref(`activities/${id}`).remove();
@@ -3932,20 +3827,10 @@
                 if (opportunity) {
                     opportunity.stage = newStage;
                     opportunity.updatedAt = new Date().toISOString();
-<<<<<<< HEAD
-
-                    this.saveAllToLocalStorage();
-
-                    if (this.state.firebaseDb && this.state.isOnline) {
-                        this.state.firebaseDb.ref(`opportunities/${oppId}`).set(opportunity);
-                    }
-
-=======
                     
                     // Save to Firebase
                     this.saveToFirebase('opportunities', opportunity);
                     
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
                     this.render();
                 }
 
@@ -4134,9 +4019,6 @@
                     </div>
                 `;
             }
-<<<<<<< HEAD
-
-=======
             // ✅ ADD CONNECTION STATUS INDICATOR TO YOUR NAVIGATION:
             renderNavigationStatus() {
                 return `
@@ -4163,7 +4045,6 @@
                     </div>
                 `;
             }
->>>>>>> 7783889 (Refactor data handling to use Firebase instead of localStorage for improved synchronization and real-time updates)
             renderGlobalSearchResults() {
                 const results = this.state.globalSearchResults;
                 const hasResults = Object.values(results).some(arr => arr.length > 0);
