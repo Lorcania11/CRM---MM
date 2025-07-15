@@ -22,9 +22,6 @@
         connect-src 'self'
             https://*.googleapis.com
             https://*.google.com
-            https://*.firebaseio.com
-            https://*.firebaseapp.com
-            wss://*.firebaseio.com
             https://securetoken.googleapis.com/
             https://www.googleapis.com/
             https://accounts.google.com/
@@ -40,7 +37,6 @@
             https://content.googleapis.com/
             https://www.google.com/
             https://securetoken.googleapis.com/
-            https://*.firebaseapp.com
             https://outlook.office365.com/
             https://outlook.office.com/;
         style-src 'self' 'unsafe-inline' 
@@ -260,17 +256,7 @@
     <script src="https://alcdn.msauth.net/browser/2.30.0/js/msal-browser.min.js"></script>
 
     <script>
-        console.log("📜 SCRIPT BLOCK EXECUTED");
-        // Firebase configuration
-        const FIREBASE_CONFIG = {
-            apiKey: "AIzaSyCKIKzPH6ibixe7rnq0em4AAsdq5b10WDA",
-            authDomain: "crm-mm-7bdfb.firebaseapp.com",
-            databaseURL: "https://crm-mm-7bdfb-default-rtdb.firebaseio.com",
-            projectId: "crm-mm-7bdfb",
-            storageBucket: "crm-mm-7bdfb.firebasestorage.app",
-            messagingSenderId: "321138365753",
-            appId: "1:321138365753:web:866da9cdc5a300219944e8"
-        };
+        console.log("📜 AZURE-ONLY CRM STARTED");
 
         // Google Calendar configuration
         const GOOGLE_CONFIG = {
@@ -379,13 +365,16 @@
         // Contact methods
         const CONTACT_METHODS = ["Phone", "Email", "Text/SMS", "In-Person", "Any"];
 
-        // Main CRM Application Class
+        // Main CRM Application Class - Azure SQL Database Only
         class MajorMetalsCRM {
             constructor() {
+                // Azure Functions configuration - ONLY BACKEND
+                this.AZURE_API_BASE = 'https://func-majormetals-crm.azurewebsites.net/api';
                 this.tokenClient = null;
                 this.accessToken = null;
                 this.msalInstance = null;
-                this.msalReady = false; // ✅ Add this line
+                this.msalReady = false;
+                
                 this.state = {
                     activeView: 'dashboard',
                     customers: [],
@@ -405,9 +394,7 @@
                     isOnline: navigator.onLine,
                     isSyncing: false,
                     lastSync: null,
-                    firebaseDb: null,
-                    firebaseStorage: null,
-                    isFirebaseConfigured: false,
+                    azureConnected: false,  // ✅ ADD THIS - Azure SQL connection status
                     editingCustomer: null,
                     mobileMenuOpen: false,
                     selectedOpp: null,
@@ -437,7 +424,7 @@
                         cellData: [],
                         isLoading: false,
                         error: null,
-                        viewMode: 'grid', // 'grid' or 'iframe'
+                        viewMode: 'grid',
                         autoSyncEnabled: false,
                         lastSync: null,
                         embeddedUrl: null
@@ -468,7 +455,12 @@
                         marketSentiment: null,
                         isLoading: false
                     },
-                    showMarketIntelligence: false
+                    showMarketIntelligence: false,
+
+                    // Azure-only configuration
+                    azureHealthy: false,
+                    backendStatus: 'connecting', // 'connected', 'offline', 'error'
+                    connectionError: null
                 };
 
                 this.customerStages = [
@@ -490,93 +482,620 @@
                     { id: 'won', name: 'Won', color: 'bg-green-500' },
                     { id: 'lost', name: 'Lost', color: 'bg-red-500' }
                 ];
-                console.log("🚀 Running constructor");
+
+                console.log("🚀 Initializing Azure-Only CRM");
                 this.init();
             }
 
-            async init() {
-                console.log("🚨 INIT STARTED");
+            // =====================================
+            // AZURE BACKEND METHODS - ONLY BACKEND
+            // =====================================
 
-                this.loadFromFirebase();
-                await this.setupFirebase();
-                this.setupEventListeners();
-                await this.initGoogleCalendar();
-                this.setupMarketIntelligenceRefresh();
+            async loadFromAzure() {
+                try {
+                    console.log('🔄 Loading all data from Azure SQL Database...');
+                    this.state.isSyncing = true;
+                    this.state.backendStatus = 'connecting';
+                    this.render();
 
-                await this.initMicrosoftAuth(); // ✅ One call only
+                    // Load all data in parallel from Azure Functions
+                    const [customersResponse, opportunitiesResponse, activitiesResponse, quotesResponse] = await Promise.all([
+                        fetch(`${this.AZURE_API_BASE}/customers`, {
+                            headers: { 'Accept': 'application/json' }
+                        }),
+                        fetch(`${this.AZURE_API_BASE}/opportunities`, {
+                            headers: { 'Accept': 'application/json' }
+                        }),
+                        fetch(`${this.AZURE_API_BASE}/activities`, {
+                            headers: { 'Accept': 'application/json' }
+                        }),
+                        fetch(`${this.AZURE_API_BASE}/quotes`, {
+                            headers: { 'Accept': 'application/json' }
+                        })
+                    ]);
 
-                this.render();
+                    // Check if all requests were successful
+                    if (!customersResponse.ok || !opportunitiesResponse.ok || !activitiesResponse.ok || !quotesResponse.ok) {
+                        throw new Error(`Azure API error: ${customersResponse.status} ${opportunitiesResponse.status} ${activitiesResponse.status} ${quotesResponse.status}`);
+                    }
 
-                const btn = document.getElementById("connectMicrosoftBtn");
-                if (btn) {
-                    console.log("✅ Binding connectMicrosoftBtn");
-                    btn.addEventListener("click", this.connectToMicrosoft.bind(this));
-                } else {
-                    console.warn("❌ Connect button not found in DOM");
+                    // Parse responses
+                    const customers = await customersResponse.json();
+                    const opportunities = await opportunitiesResponse.json();
+                    const activities = await activitiesResponse.json();
+                    const quotes = await quotesResponse.json();
+
+                    console.log('📊 Loaded from Azure SQL:', {
+                        customers: customers.length,
+                        opportunities: opportunities.length,
+                        activities: activities.length,
+                        quotes: quotes.length
+                    });
+
+                    // Update state
+                    this.state.customers = customers || [];
+                    this.state.opportunities = opportunities || [];
+                    this.state.activities = activities || [];
+                    this.state.quotes = quotes || [];
+                    
+                    // Connection successful
+                    this.state.azureHealthy = true;
+                    this.state.backendStatus = 'connected';
+                    this.state.connectionError = null;
+                    this.state.lastSync = new Date().toISOString();
+                    this.state.isSyncing = false;
+                    
+                    console.log('✅ Azure loading completed successfully');
+                    this.render();
+
+                } catch (error) {
+                    console.error('❌ Error loading from Azure:', error);
+                    this.state.isSyncing = false;
+                    this.state.azureHealthy = false;
+                    this.state.backendStatus = 'error';
+                    this.state.connectionError = error.message;
+                    
+                    // Initialize with empty data since we're Azure-only
+                    this.state.customers = [];
+                    this.state.opportunities = [];
+                    this.state.activities = [];
+                    this.state.quotes = [];
+                    
+                    this.render();
+                    
+                    // Show connection error
+                    this.showConnectionError(error);
                 }
             }
 
-            setupEventListeners() {
-                window.addEventListener('online', () => {
-                    this.state.isOnline = true;
-                    this.render();
-                });
-                window.addEventListener('offline', () => {
-                    this.state.isOnline = false;
-                    this.render();
-                });
+            async saveToAzure(entityType, data) {
+                try {
+                    console.log(`💾 Saving ${entityType} to Azure SQL...`);
+                    
+                    const response = await fetch(`${this.AZURE_API_BASE}/${entityType}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
 
-                // Handle global errors
-                window.addEventListener('error', (e) => {
-                    console.error('Global error:', e);
-                });
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Save failed: ${response.status} - ${errorText}`);
+                    }
+
+                    const result = await response.json();
+                    console.log(`✅ ${entityType} saved to Azure:`, result);
+                    
+                    this.state.lastSync = new Date().toISOString();
+                    return true;
+
+                } catch (error) {
+                    console.error(`❌ Error saving ${entityType} to Azure:`, error);
+                    this.showSaveError(entityType, error);
+                    return false;
+                }
             }
 
-            async setupFirebase() {
-                if (FIREBASE_CONFIG.apiKey !== "YOUR-API-KEY") {
-                    this.state.isFirebaseConfigured = true;
+            async updateInAzure(entityType, id, data) {
+                try {
+                    console.log(`🔄 Updating ${entityType} ${id} in Azure SQL...`);
+                    
+                    const response = await fetch(`${this.AZURE_API_BASE}/${entityType}/${id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
 
-                    try {
-                        await this.loadScript('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
-                        await this.loadScript('https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js');
-                        await this.loadScript('https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js');
-                        await this.loadScript('https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js');
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Update failed: ${response.status} - ${errorText}`);
+                    }
 
-                        if (window.firebase) {
-                            window.firebase.initializeApp(FIREBASE_CONFIG);
-                            this.state.firebaseDb = window.firebase.database();
-                            this.state.firebaseStorage = window.firebase.storage();
-                            this.state.firebaseAuth = window.firebase.auth();
+                    const result = await response.json();
+                    console.log(`✅ ${entityType} updated in Azure:`, result);
+                    
+                    this.state.lastSync = new Date().toISOString();
+                    return true;
 
-                            // Enable anonymous authentication by default
-                            window.firebase.auth().onAuthStateChanged(async (user) => {
-                                if (!user) {
-                                    try {
-                                        await window.firebase.auth().signInAnonymously();
-                                        console.log('Auto-signed in anonymously for Firebase operations');
-                                    } catch (error) {
-                                        console.error('Auto anonymous sign-in failed:', error);
-                                    }
-                                }
-                            });
+                } catch (error) {
+                    console.error(`❌ Error updating ${entityType} in Azure:`, error);
+                    this.showSaveError(entityType, error);
+                    return false;
+                }
+            }
 
-                            this.setupFirebaseListeners();
+            async deleteFromAzure(entityType, id) {
+                try {
+                    console.log(`🗑️ Deleting ${entityType} ${id} from Azure SQL...`);
+                    
+                    const response = await fetch(`${this.AZURE_API_BASE}/${entityType}/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Accept': 'application/json'
                         }
-                    } catch (error) {
-                        console.error('Error loading Firebase:', error);
-                        this.state.isFirebaseConfigured = false;
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Delete failed: ${response.status} - ${errorText}`);
+                    }
+
+                    console.log(`✅ ${entityType} deleted from Azure`);
+                    this.state.lastSync = new Date().toISOString();
+                    return true;
+
+                } catch (error) {
+                    console.error(`❌ Error deleting ${entityType} from Azure:`, error);
+                    this.showSaveError(entityType, error);
+                    return false;
+                }
+            }
+
+            async checkAzureHealth() {
+                try {
+                    console.log('🏥 Checking Azure SQL Database health...');
+                    const response = await fetch(`${this.AZURE_API_BASE}/health`, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Health check failed: ${response.status}`);
+                    }
+                    
+                    const health = await response.json();
+                    console.log('🏥 Azure Health:', health);
+                    
+                    this.state.azureHealthy = health.status === 'healthy';
+                    this.state.backendStatus = this.state.azureHealthy ? 'connected' : 'error';
+                    this.state.connectionError = this.state.azureHealthy ? null : 'Health check failed';
+                    
+                    if (this.state.azureHealthy) {
+                        alert(`✅ Azure SQL Database Connected!\n\nServer: ${health.server || 'Connected'}\nDatabase: ${health.database_name || 'MajorMetalsCRM'}\nUser: ${health.user || 'CRM'}\nTime: ${new Date(health.timestamp).toLocaleString()}`);
+                    } else {
+                        alert('❌ Azure SQL Database Connection Failed');
+                    }
+                    
+                    this.render();
+                    return this.state.azureHealthy;
+                    
+                } catch (error) {
+                    console.error('❌ Azure health check failed:', error);
+                    this.state.azureHealthy = false;
+                    this.state.backendStatus = 'error';
+                    this.state.connectionError = error.message;
+                    alert(`❌ Azure Connection Failed\n\n${error.message}\n\nPlease check:\n• Internet connection\n• Azure Function App is running\n• Database credentials are correct`);
+                    this.render();
+                    return false;
+                }
+            }
+
+            async getDashboardMetrics() {
+                try {
+                    console.log('📊 Loading dashboard metrics from Azure...');
+                    const response = await fetch(`${this.AZURE_API_BASE}/dashboard/metrics`, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    
+                    if (response.ok) {
+                        const metrics = await response.json();
+                        console.log('📊 Azure metrics loaded:', metrics);
+                        return metrics;
+                    } else {
+                        throw new Error('Failed to load metrics from Azure');
+                    }
+                } catch (error) {
+                    console.error('Error loading Azure metrics, using local calculation:', error);
+                    return this.getMetricsLocal();
+                }
+            }
+
+            getMetricsLocal() {
+                const openOpportunities = this.state.opportunities.filter(o => o.stage !== 'won' && o.stage !== 'lost');
+                return {
+                    openOpportunities: openOpportunities.length,
+                    totalPipeline: openOpportunities.reduce((sum, o) => sum + (o.value || 0), 0),
+                    wonDeals: this.state.opportunities.filter(o => o.stage === 'won').reduce((sum, o) => sum + (o.value || 0), 0),
+                    activeCustomers: this.state.customers.filter(c => c.status === 'active').length,
+                    winRate: this.state.opportunities.length > 0
+                        ? Math.round((this.state.opportunities.filter(o => o.stage === 'won').length / this.state.opportunities.length) * 100)
+                        : 0
+                };
+            }
+
+            // =====================================
+            // ERROR HANDLING METHODS
+            // =====================================
+
+            showConnectionError(error) {
+                const errorModal = `
+                    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                            <div class="text-center">
+                                <div class="text-6xl mb-4">❌</div>
+                                <h3 class="text-xl font-bold text-red-600 mb-4">Azure Connection Failed</h3>
+                                <p class="text-gray-600 mb-4">${error.message}</p>
+                                <div class="text-sm text-gray-500 mb-6">
+                                    <p>Please check:</p>
+                                    <ul class="list-disc list-inside mt-2 space-y-1">
+                                        <li>Internet connection</li>
+                                        <li>Azure Function App is deployed</li>
+                                        <li>Database is running</li>
+                                        <li>API endpoints are configured</li>
+                                    </ul>
+                                </div>
+                                <div class="flex space-x-3">
+                                    <button onclick="app.retryConnection()" 
+                                            class="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                        Retry Connection
+                                    </button>
+                                    <button onclick="app.checkAzureHealth()" 
+                                            class="flex-1 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+                                        Test Connection
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add error modal to DOM
+                const existingModal = document.getElementById('connection-error-modal');
+                if (existingModal) existingModal.remove();
+                
+                const modalDiv = document.createElement('div');
+                modalDiv.id = 'connection-error-modal';
+                modalDiv.innerHTML = errorModal;
+                document.body.appendChild(modalDiv);
+            }
+
+            showSaveError(entityType, error) {
+                alert(`❌ Failed to save ${entityType}\n\n${error.message}\n\nPlease check your connection and try again.`);
+            }
+
+            retryConnection() {
+                // Remove error modal
+                const errorModal = document.getElementById('connection-error-modal');
+                if (errorModal) errorModal.remove();
+                
+                // Retry loading data
+                this.loadFromAzure();
+            }
+            // =====================================
+            // INITIALIZATION - AZURE ONLY
+            // =====================================
+
+            async init() {
+                console.log("🚨 INIT STARTED - Azure SQL Database Only");
+
+                // Load from Azure (only backend)
+                await this.loadFromAzure();
+
+                // Initialize other components
+                this.setupEventListeners();
+                await this.initGoogleCalendar();
+                this.setupMarketIntelligenceRefresh();
+                await this.initMicrosoftAuth();
+                this.render();
+
+                // Check Azure connection on startup
+                await this.checkAzureConnection();
+                
+                // Check connection every 30 seconds
+                setInterval(() => this.checkAzureConnection(), 30000);
+
+                // Bind Microsoft connect button
+                const btn = document.getElementById("connectMicrosoftBtn");
+                if (btn) {
+                    btn.addEventListener("click", this.connectToMicrosoft.bind(this));
+                }
+            }
+
+            // =====================================
+            // CRUD OPERATIONS - AZURE ONLY
+            // =====================================
+
+            async handleAddCustomer() {
+                const newCustomer = {
+                    id: Date.now().toString(),
+                    ...this.state.formData,
+                    industry: this.state.formData.industry === 'Other'
+                        ? (this.state.formData.customIndustry || 'Other')
+                        : this.state.formData.industry,
+                    status: this.state.formData.status || 'prospect',
+                    pipelineStage: this.state.formData.pipelineStage || 'lead',
+                    primaryProducts: this.state.formData.primaryProducts || [],
+                    preferredContact: this.state.formData.preferredContact || 'Any',
+                    attachments: this.state.formData.attachments || [],
+                    contacts: this.state.formData.contacts || [{
+                        name: this.state.formData.contact || '',
+                        email: this.state.formData.email || '',
+                        cell: this.state.formData.phone || '',
+                        title: ''
+                    }],
+                    // Legacy fields for backward compatibility
+                    contact: this.state.formData.contacts?.[0]?.name || this.state.formData.contact || '',
+                    email: this.state.formData.contacts?.[0]?.email || this.state.formData.email || '',
+                    phone: this.state.formData.contacts?.[0]?.cell || this.state.formData.phone || '',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+
+                delete newCustomer.customIndustry;
+
+                // Save to Azure SQL Database ONLY
+                const success = await this.saveToAzure('customers', newCustomer);
+                
+                if (success) {
+                    this.state.customers.push(newCustomer);
+                    this.closeModal();
+                    this.render();
+                }
+            }
+
+            async handleUpdateCustomer() {
+                const updatedData = {
+                    ...this.state.formData,
+                    industry: this.state.formData.industry === 'Other'
+                        ? (this.state.formData.customIndustry || 'Other')
+                        : this.state.formData.industry,
+                    primaryProducts: this.state.formData.primaryProducts || [],
+                    preferredContact: this.state.formData.preferredContact || 'Any',
+                    attachments: this.state.formData.attachments || [],
+                    contacts: this.state.formData.contacts || [],
+                    updatedAt: new Date().toISOString()
+                };
+
+                delete updatedData.customIndustry;
+
+                // Update in Azure SQL Database ONLY
+                const success = await this.updateInAzure('customers', this.state.editingCustomer.id, updatedData);
+                
+                if (success) {
+                    const index = this.state.customers.findIndex(c => c.id === this.state.editingCustomer.id);
+                    if (index !== -1) {
+                        this.state.customers[index] = {
+                            ...this.state.editingCustomer,
+                            ...updatedData
+                        };
+                    }
+                    this.closeModal();
+                    this.render();
+                }
+            }
+
+            async handleDeleteCustomer(customerId) {
+                if (confirm('Delete this customer and all related data from Azure SQL Database?')) {
+                    const success = await this.deleteFromAzure('customers', customerId);
+                    
+                    if (success) {
+                        this.state.customers = this.state.customers.filter(c => c.id !== customerId);
+                        this.state.opportunities = this.state.opportunities.filter(o => o.customerId !== customerId);
+                        this.state.activities = this.state.activities.filter(a => a.customerId !== customerId);
+                        this.render();
                     }
                 }
             }
 
-            loadScript(src) {
-                return new Promise((resolve, reject) => {
-                    const script = document.createElement('script');
-                    script.src = src;
-                    script.onload = resolve;
-                    script.onerror = reject;
-                    document.head.appendChild(script);
-                });
+            async handleAddOpportunity() {
+                const newOpportunity = {
+                    id: Date.now().toString(),
+                    ...this.state.formData,
+                    stage: 'new',
+                    salesRep: 'Kaleb Smith',
+                    createdAt: new Date().toISOString()
+                };
+
+                const success = await this.saveToAzure('opportunities', newOpportunity);
+
+                if (success) {
+                    this.state.opportunities.push(newOpportunity);
+                    this.closeModal();
+                    this.render();
+                }
+            }
+
+            async handleAddQuote() {
+                const newQuote = {
+                    id: Date.now().toString(),
+                    quoteNumber: `Q-${new Date().getFullYear()}-${String(this.state.quotes.length + 1).padStart(3, '0')}`,
+                    quoteName: this.state.formData.quoteName || 'New Quote',
+                    ...this.state.formData,
+                    status: 'draft',
+                    createdAt: new Date().toISOString()
+                };
+
+                const success = await this.saveToAzure('quotes', newQuote);
+
+                if (success) {
+                    this.state.quotes.push(newQuote);
+                    this.closeModal();
+                    this.render();
+                }
+            }
+
+            async handleAddActivity() {
+                if (this.state.editingActivity) {
+                    // Update existing activity
+                    const updatedActivity = {
+                        ...this.state.editingActivity,
+                        ...this.state.formData,
+                        updatedAt: new Date().toISOString()
+                    };
+
+                    const success = await this.updateInAzure('activities', this.state.editingActivity.id, updatedActivity);
+
+                    if (success) {
+                        const index = this.state.activities.findIndex(a => a.id === this.state.editingActivity.id);
+                        if (index !== -1) {
+                            this.state.activities[index] = updatedActivity;
+                        }
+                        this.closeModal();
+                        this.render();
+                    }
+                } else {
+                    // Create new activity
+                    const newActivity = {
+                        id: Date.now().toString(),
+                        ...this.state.formData,
+                        completed: false,
+                        followUpCreated: false,
+                        pipelineStage: this.state.formData.pipelineStage ||
+                            this.state.customers.find(c => c.id === this.state.formData.customerId)?.pipelineStage || 'lead',
+                        createdAt: new Date().toISOString()
+                    };
+
+                    const success = await this.saveToAzure('activities', newActivity);
+
+                    if (success) {
+                        this.state.activities.push(newActivity);
+                        this.closeModal();
+
+                        if (this.state.formData.addToCalendar && this.state.googleCalendarConnected) {
+                            await this.addToGoogleCalendar(newActivity);
+                        }
+                        this.render();
+                    }
+                }
+            }
+
+            async markActivityComplete(activityId) {
+                const activity = this.state.activities.find(a => a.id === activityId);
+                if (activity) {
+                    const updatedActivity = {
+                        ...activity,
+                        completed: true,
+                        completedDate: new Date().toISOString()
+                    };
+
+                    const success = await this.updateInAzure('activities', activityId, updatedActivity);
+
+                    if (success) {
+                        const index = this.state.activities.findIndex(a => a.id === activityId);
+                        if (index !== -1) {
+                            this.state.activities[index] = updatedActivity;
+                        }
+                        this.state.showFollowUp = updatedActivity;
+                        this.render();
+                    }
+                }
+            }
+
+            async createFollowUp(originalActivity, followUpData) {
+                const newActivity = {
+                    id: Date.now().toString(),
+                    customerId: originalActivity.customerId,
+                    type: followUpData.type,
+                    subject: followUpData.subject,
+                    date: followUpData.date,
+                    time: followUpData.time,
+                    notes: followUpData.notes,
+                    completed: false,
+                    followUpCreated: false,
+                    pipelineStage: followUpData.pipelineStage,
+                    createdAt: new Date().toISOString()
+                };
+
+                const success = await this.saveToAzure('activities', newActivity);
+
+                if (success) {
+                    this.state.activities.push(newActivity);
+                    
+                    // Update original activity
+                    originalActivity.followUpCreated = true;
+                    await this.updateInAzure('activities', originalActivity.id, originalActivity);
+
+                    this.state.showFollowUp = null;
+                    this.render();
+                }
+            }
+
+            async deleteActivity(id) {
+                if (confirm('Delete this activity from Azure SQL Database?')) {
+                    const success = await this.deleteFromAzure('activities', id);
+                    
+                    if (success) {
+                        this.state.activities = this.state.activities.filter(a => a.id !== id);
+                        this.render();
+                    }
+                }
+            }
+
+            // Bulk operations for Azure
+            async bulkUpdateStage(stage) {
+                const selectedIds = Array.from(this.state.selectedItems);
+                let successCount = 0;
+                
+                for (const id of selectedIds) {
+                    const customer = this.state.customers.find(c => c.id === id);
+                    if (customer) {
+                        customer.pipelineStage = stage;
+                        customer.updatedAt = new Date().toISOString();
+                        
+                        const success = await this.updateInAzure('customers', id, customer);
+                        if (success) successCount++;
+                    }
+                }
+
+                if (successCount > 0) {
+                    alert(`✅ Updated ${successCount} customers in Azure SQL Database`);
+                    this.state.bulkMode = false;
+                    this.state.selectedItems.clear();
+                    this.closeModal();
+                    this.render();
+                } else {
+                    alert('❌ Failed to update customers. Please try again.');
+                }
+            }
+
+            async bulkDelete() {
+                if (!confirm(`Delete ${this.state.selectedItems.size} customers from Azure SQL Database?`)) return;
+
+                const selectedIds = Array.from(this.state.selectedItems);
+                let successCount = 0;
+                
+                for (const id of selectedIds) {
+                    const success = await this.deleteFromAzure('customers', id);
+                    if (success) {
+                        successCount++;
+                        // Remove from local state
+                        this.state.customers = this.state.customers.filter(c => c.id !== id);
+                    }
+                }
+
+                if (successCount > 0) {
+                    alert(`✅ Deleted ${successCount} customers from Azure SQL Database`);
+                    this.state.bulkMode = false;
+                    this.state.selectedItems.clear();
+                    this.render();
+                } else {
+                    alert('❌ Failed to delete customers. Please try again.');
+                }
             }
 
             setupMarketIntelligenceRefresh() {
@@ -2448,252 +2967,7 @@
                 return `${hours.toString().padStart(2, '0')}:${minutes}`;
             }
 
-            // 🔥 REPLACE YOUR METHODS WITH THESE CORRECTED VERSIONS:
-            // ✅ CORRECTED loadFromFirebase() - Actually loads from Firebase, not localStorage!
-            async loadFromFirebase() {
-                try {
-                    console.log('🔄 Loading data from Firebase...');
-                    
-                    // Check Firebase configuration
-                    if (!this.state.firebaseDb || !this.state.isFirebaseConfigured) {
-                        console.log('❌ Firebase not configured');
-                        this.initializeSampleData();
-                        return;
-                    }
-
-                    // Ensure Firebase authentication
-                    await this.ensureFirebaseAuth();
-
-                    this.state.isSyncing = true;
-                    if (this.render) this.render();
-
-                    // 🔥 LOAD FROM FIREBASE, NOT LOCALSTORAGE!
-                    const [customersSnapshot, opportunitiesSnapshot, quotesSnapshot, activitiesSnapshot] = await Promise.all([
-                        this.state.firebaseDb.ref('customers').once('value'),
-                        this.state.firebaseDb.ref('opportunities').once('value'),
-                        this.state.firebaseDb.ref('quotes').once('value'),
-                        this.state.firebaseDb.ref('activities').once('value')
-                    ]);
-
-                    // Convert Firebase data to arrays
-                    const customers = this.convertFirebaseToArray(customersSnapshot.val()) || [];
-                    const opportunities = this.convertFirebaseToArray(opportunitiesSnapshot.val()) || [];
-                    const quotes = this.convertFirebaseToArray(quotesSnapshot.val()) || [];
-                    const activities = this.convertFirebaseToArray(activitiesSnapshot.val()) || [];
-
-                    console.log('📊 Loaded from Firebase:', {
-                        customers: customers.length,
-                        opportunities: opportunities.length,
-                        quotes: quotes.length,
-                        activities: activities.length
-                    });
-
-                    // Migrate existing customers to new contact structure if needed
-                    let migrationCount = 0;
-                    const migratedCustomers = customers.map(customer => {
-                        if (customer.contact && !customer.contacts) {
-                            migrationCount++;
-                            const migratedCustomer = {
-                                ...customer,
-                                contacts: [{
-                                    name: customer.contact,
-                                    email: customer.email,
-                                    cell: customer.phone,
-                                    title: ''
-                                }],
-                                updatedAt: new Date().toISOString()
-                            };
-                            
-                            // Save migrated customer back to Firebase
-                            this.state.firebaseDb.ref(`customers/${customer.id}`).set(migratedCustomer);
-                            return migratedCustomer;
-                        }
-                        return customer;
-                    });
-
-                    if (migrationCount > 0) {
-                        console.log(`✅ Migrated ${migrationCount} customers`);
-                    }
-
-                    // 🔥 UPDATE STATE WITH FIREBASE DATA
-                    this.state.customers = migratedCustomers;
-                    this.state.opportunities = opportunities;
-                    this.state.quotes = quotes;
-                    this.state.activities = activities;
-
-                    // Initialize sample data if nothing exists
-                    const hasData = customers.length > 0 || opportunities.length > 0 || activities.length > 0;
-                    if (!hasData) {
-                        console.log('🌱 No data found, initializing sample data');
-                        await this.initializeSampleDataToFirebase();
-                    }
-
-                    this.state.lastSync = new Date().toISOString();
-                    this.state.isSyncing = false;
-                    
-                    console.log('✅ Firebase loading completed');
-                    if (this.render) this.render();
-
-                } catch (error) {
-                    console.error('❌ Error loading from Firebase:', error);
-                    this.state.isSyncing = false;
-                    
-                    // Fallback to sample data
-                    this.initializeSampleData();
-                    if (this.render) this.render();
-                }
-            }
-
-            // ✅ CORRECTED saveAllToFirebase() - Proper async/await and object format
-            async saveAllToFirebase() {
-                if (!this.state.firebaseDb || !this.state.isOnline) {
-                    console.log('⚠️ Cannot save - Firebase not available');
-                    return false;
-                }
-
-                try {
-                    console.log('💾 Saving all data to Firebase...');
-                    this.state.isSyncing = true;
-                    if (this.render) this.render();
-
-                    // Convert arrays to Firebase object format (Firebase expects objects, not arrays)
-                    const customersObj = this.convertArrayToFirebaseObject(this.state.customers);
-                    const opportunitiesObj = this.convertArrayToFirebaseObject(this.state.opportunities);
-                    const quotesObj = this.convertArrayToFirebaseObject(this.state.quotes);
-                    const activitiesObj = this.convertArrayToFirebaseObject(this.state.activities);
-
-                    // 🔥 SAVE TO FIREBASE WITH PROPER AWAIT
-                    await Promise.all([
-                        this.state.firebaseDb.ref('customers').set(customersObj),
-                        this.state.firebaseDb.ref('opportunities').set(opportunitiesObj),
-                        this.state.firebaseDb.ref('quotes').set(quotesObj),
-                        this.state.firebaseDb.ref('activities').set(activitiesObj)
-                    ]);
-
-                    this.state.lastSync = new Date().toISOString();
-                    this.state.isSyncing = false;
-                    
-                    console.log('✅ All data saved to Firebase');
-                    if (this.render) this.render();
-                    return true;
-
-                } catch (error) {
-                    console.error('❌ Error saving to Firebase:', error);
-                    this.state.isSyncing = false;
-                    if (this.render) this.render();
-                    return false;
-                }
-            }
-
-            // 🔥 ADD THESE HELPER METHODS IF YOU DON'T HAVE THEM:
-
-            // Ensure Firebase authentication
-            async ensureFirebaseAuth() {
-                return new Promise((resolve, reject) => {
-                    const currentUser = window.firebase.auth().currentUser;
-                    if (currentUser) {
-                        resolve(currentUser);
-                        return;
-                    }
-
-                    const unsubscribe = window.firebase.auth().onAuthStateChanged(async (user) => {
-                        if (user) {
-                            console.log('✅ Firebase authenticated');
-                            unsubscribe();
-                            resolve(user);
-                        } else {
-                            try {
-                                console.log('🔑 Signing in anonymously...');
-                                const userCredential = await window.firebase.auth().signInAnonymously();
-                                unsubscribe();
-                                resolve(userCredential.user);
-                            } catch (authError) {
-                                console.error('❌ Auth failed:', authError);
-                                unsubscribe();
-                                reject(authError);
-                            }
-                        }
-                    });
-
-                    // Timeout after 10 seconds
-                    setTimeout(() => {
-                        unsubscribe();
-                        reject(new Error('Auth timeout'));
-                    }, 10000);
-                });
-            }
-
-            // Convert Firebase object to array
-            convertFirebaseToArray(firebaseData) {
-                if (!firebaseData || typeof firebaseData !== 'object') {
-                    return [];
-                }
-                
-                return Object.entries(firebaseData).map(([id, data]) => ({
-                    ...data,
-                    id: id
-                }));
-            }
-
-            // Convert array to Firebase object format
-            convertArrayToFirebaseObject(array) {
-                if (!Array.isArray(array)) return {};
-                
-                const obj = {};
-                array.forEach(item => {
-                    if (item.id) {
-                        obj[item.id] = item;
-                    }
-                });
-                return obj;
-            }
-
-            // ✅ REPLACE setupFirebaseListeners WITH THIS VERSION:
-            setupFirebaseListeners() {
-                const db = this.state.firebaseDb;
-                
-                console.log('🔗 Setting up Firebase real-time listeners...');
-
-                ['customers', 'opportunities', 'activities', 'quotes'].forEach(collection => {
-                    db.ref(collection).on('value', (snapshot) => {
-                        const data = snapshot.val();
-                        
-                        if (data) {
-                            const dataArray = this.convertFirebaseToArray(data);
-                            
-                            // Only update if data actually changed
-                            if (JSON.stringify(this.state[collection]) !== JSON.stringify(dataArray)) {
-                                this.state[collection] = dataArray;
-                                console.log(`🔄 ${collection} updated from Firebase:`, dataArray.length);
-                                this.render();
-                            }
-                        } else {
-                            // Handle empty collection
-                            this.state[collection] = [];
-                            console.log(`🔄 ${collection} cleared (empty in Firebase)`);
-                            this.render();
-                        }
-                    }, (error) => {
-                        console.error(`❌ Firebase listener error for ${collection}:`, error);
-                    });
-                });
-
-                // Monitor Firebase connection status
-                db.ref('.info/connected').on('value', (snapshot) => {
-                    const connected = snapshot.val();
-                    this.state.isOnline = connected;
-                    console.log(`🌐 Firebase connection: ${connected ? 'online' : 'offline'}`);
-                    
-                    if (connected) {
-                        this.state.lastSync = new Date().toISOString();
-                    }
-                    
-                    this.render();
-                });
-
-                console.log('✅ Firebase real-time listeners set up');
-            }
-
+            
             // Icon components - Enhanced with Market Intelligence icons
             icon(name, size = 20, className = "") {
                 const icons = {
@@ -2908,985 +3182,6 @@
                 this.state.globalSearchResults = results;
             }
 
-            // Bulk Operations
-            toggleBulkMode() {
-                this.state.bulkMode = !this.state.bulkMode;
-                this.state.selectedItems.clear();
-                this.render();
-            }
-
-            toggleSelectItem(id) {
-                if (this.state.selectedItems.has(id)) {
-                    this.state.selectedItems.delete(id);
-                } else {
-                    this.state.selectedItems.add(id);
-                }
-                this.render();
-            }
-
-            selectAllItems(items) {
-                if (this.state.selectedItems.size === items.length) {
-                    this.state.selectedItems.clear();
-                } else {
-                    items.forEach(item => this.state.selectedItems.add(item.id));
-                }
-                this.render();
-            }
-
-            executeBulkAction() {
-                const action = document.getElementById('bulk-action-select')?.value;
-                if (!action || this.state.selectedItems.size === 0) {
-                    alert('Please select items and an action');
-                    return;
-                }
-
-                switch (action) {
-                    case 'update-stage':
-                        this.showBulkUpdateModal('stage');
-                        break;
-                    case 'update-status':
-                        this.showBulkUpdateModal('status');
-                        break;
-                    case 'delete':
-                        this.bulkDelete();
-                        break;
-                    case 'export':
-                        this.exportSelected();
-                        break;
-                }
-            }
-
-            showBulkUpdateModal(type) {
-                this.state.showModal = `bulk-${type}`;
-                this.render();
-            }
-
-            // ✅ UPDATE YOUR BULK OPERATIONS - REPLACE localStorage WITH Firebase:
-            async bulkUpdateStage(stage) {
-                const selectedIds = Array.from(this.state.selectedItems);
-                
-                // Update local state
-                for (const id of selectedIds) {
-                    const customer = this.state.customers.find(c => c.id === id);
-                    if (customer) {
-                        customer.pipelineStage = stage;
-                        customer.updatedAt = new Date().toISOString();
-                    }
-                }
-
-                // Save all updated customers to Firebase
-                const savePromises = selectedIds.map(id => {
-                    const customer = this.state.customers.find(c => c.id === id);
-                    return customer ? this.saveToFirebase('customers', customer) : Promise.resolve();
-                });
-                
-                await Promise.all(savePromises);
-
-                this.state.bulkMode = false;
-                this.state.selectedItems.clear();
-                this.closeModal();
-            }
-
-            async bulkDelete() {
-                if (!confirm(`Delete ${this.state.selectedItems.size} customers?`)) return;
-
-                const selectedIds = Array.from(this.state.selectedItems);
-                
-                // Remove from local state
-                this.state.customers = this.state.customers.filter(c => !selectedIds.includes(c.id));
-                
-                // Delete from Firebase
-                const deletePromises = selectedIds.map(id => this.deleteFromFirebase('customers', id));
-                await Promise.all(deletePromises);
-
-                this.state.bulkMode = false;
-                this.state.selectedItems.clear();
-                this.render();
-            }
-
-            // ✅ EXPORT FUNCTION - UPDATE TO USE Firebase DATA:
-            exportSelected() {
-                const selectedCustomers = this.state.customers.filter(c =>
-                    this.state.selectedItems.has(c.id)
-                );
-
-                const csv = this.convertToCSV(selectedCustomers);
-                this.downloadCSV(csv, 'customers_export.csv');
-
-                this.state.bulkMode = false;
-                this.state.selectedItems.clear();
-                this.render();
-                
-                // Note: No localStorage save needed - data is already in Firebase
-            }
-
-            convertToCSV(data) {
-                const headers = ['Name', 'Industry', 'Office Number', 'Primary Contact', 'Primary Email', 'Primary Cell', 'Status', 'Products'];
-                const rows = data.map(item => {
-                    const primaryContact = item.contacts?.[0] || {};
-                    return [
-                        item.name,
-                        item.industry || '',
-                        item.officeNumber || '',
-                        primaryContact.name || item.contact || '',
-                        primaryContact.email || item.email || '',
-                        primaryContact.cell || item.phone || '',
-                        item.status || '',
-                        (item.primaryProducts || []).join('; ')
-                    ];
-                });
-
-                return [headers, ...rows]
-                    .map(row => row.map(cell => `"${cell}"`).join(','))
-                    .join('\n');
-            }
-
-            downloadCSV(csv, filename) {
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                a.click();
-                window.URL.revokeObjectURL(url);
-            }
-
-            // Audio Recording
-            async startRecording() {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({
-                        audio: {
-                            echoCancellation: true,
-                            noiseSuppression: true,
-                            sampleRate: 44100
-                        }
-                    });
-
-                    // Determine the best MIME type
-                    const mimeTypes = [
-                        'audio/webm;codecs=opus',
-                        'audio/webm',
-                        'audio/mp4',
-                        'audio/ogg;codecs=opus'
-                    ];
-
-                    let selectedMimeType = '';
-                    for (const mimeType of mimeTypes) {
-                        if (MediaRecorder.isTypeSupported(mimeType)) {
-                            selectedMimeType = mimeType;
-                            break;
-                        }
-                    }
-
-                    if (!selectedMimeType) {
-                        throw new Error('No supported audio format found');
-                    }
-
-                    this.state.audioMimeType = selectedMimeType;
-                    this.state.mediaRecorder = new MediaRecorder(stream, {
-                        mimeType: selectedMimeType
-                    });
-                    this.state.audioChunks = [];
-                    this.state.recordingTime = 0;
-                    this.state.isRecording = true;
-
-                    this.state.mediaRecorder.ondataavailable = (event) => {
-                        if (event.data.size > 0) {
-                            this.state.audioChunks.push(event.data);
-                        }
-                    };
-
-                    this.state.mediaRecorder.onstop = async () => {
-                        const audioBlob = new Blob(this.state.audioChunks, {
-                            type: this.state.audioMimeType
-                        });
-
-                        // Stop all tracks to release microphone
-                        stream.getTracks().forEach(track => track.stop());
-
-                        await this.saveAudioRecording(audioBlob);
-                        this.render();
-                    };
-
-                    this.state.mediaRecorder.start();
-
-                    // Start timer
-                    this.state.recordingTimer = setInterval(() => {
-                        this.state.recordingTime++;
-                        const minutes = Math.floor(this.state.recordingTime / 60);
-                        const seconds = this.state.recordingTime % 60;
-                        const timeElement = document.getElementById('recording-time');
-                        if (timeElement) {
-                            timeElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                        }
-                    }, 1000);
-
-                    this.render();
-                } catch (error) {
-                    console.error('Error starting recording:', error);
-                    if (error.name === 'NotAllowedError') {
-                        alert('Microphone access denied. Please allow microphone access and try again.');
-                    } else if (error.name === 'NotFoundError') {
-                        alert('No microphone found. Please connect a microphone and try again.');
-                    } else {
-                        alert('Error starting recording: ' + error.message);
-                    }
-                }
-            }
-
-            stopRecording() {
-                if (this.state.mediaRecorder && this.state.isRecording) {
-                    this.state.mediaRecorder.stop();
-                    this.state.isRecording = false;
-
-                    if (this.state.recordingTimer) {
-                        clearInterval(this.state.recordingTimer);
-                        this.state.recordingTimer = null;
-                    }
-
-                    this.render();
-                }
-            }
-
-            async saveAudioRecording(audioBlob) {
-                if (!this.state.firebaseStorage || !this.state.isOnline) {
-                    // Save to local state temporarily
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                        this.state.formData.audioRecording = {
-                            localData: reader.result,
-                            duration: this.state.recordingTime,
-                            recordedAt: new Date().toISOString(),
-                            mimeType: this.state.audioMimeType || 'audio/webm'
-                        };
-                        alert('Audio recording saved locally (upload requires internet connection)');
-                    };
-                    reader.readAsDataURL(audioBlob);
-                    return;
-                }
-
-                try {
-                    const timestamp = Date.now();
-                    const fileExtension = this.state.audioMimeType ? this.state.audioMimeType.split('/')[1] : 'webm';
-                    const fileName = `activities/audio/${timestamp}_recording.${fileExtension}`;
-                    const storageRef = this.state.firebaseStorage.ref(fileName);
-
-                    const metadata = {
-                        contentType: this.state.audioMimeType || 'audio/webm',
-                        customMetadata: {
-                            duration: this.state.recordingTime.toString(),
-                            recordedAt: new Date().toISOString()
-                        }
-                    };
-
-                    console.log('Uploading audio to Firebase Storage...');
-                    const snapshot = await storageRef.put(audioBlob, metadata);
-                    const downloadURL = await snapshot.ref.getDownloadURL();
-
-                    this.state.formData.audioRecording = {
-                        url: downloadURL,
-                        duration: this.state.recordingTime,
-                        recordedAt: new Date().toISOString(),
-                        mimeType: this.state.audioMimeType || 'audio/webm'
-                    };
-
-                    console.log('Audio recording saved successfully:', downloadURL);
-                    alert('Audio recording saved successfully');
-                } catch (error) {
-                    console.error('Error saving audio:', error);
-                    alert('Error saving audio recording: ' + error.message);
-                }
-            }
-
-            // ✅ UPDATE FILE UPLOAD - REPLACE localStorage WITH Firebase:
-            async handleFileUpload(event, customerId) {
-                const file = event.target.files[0];
-                if (!file || file.type !== 'application/pdf') {
-                    alert('Please select a PDF file');
-                    return;
-                }
-
-                if (file.size > 10 * 1024 * 1024) {
-                    alert('File size must be less than 10MB');
-                    return;
-                }
-
-                // Ensure authentication
-                if (!window.firebase.auth().currentUser) {
-                    if (confirm('You need to sign in to upload files. Create a temporary account?')) {
-                        try {
-                            await window.firebase.auth().signInAnonymously();
-                            console.log('Signed in anonymously for upload');
-                        } catch (error) {
-                            alert('Could not create temporary account: ' + error.message);
-                            return;
-                        }
-                    } else {
-                        return;
-                    }
-                }
-
-                this.state.uploadingFile = true;
-                this.render();
-
-                try {
-                    if (this.state.firebaseStorage && this.state.isOnline) {
-                        const timestamp = Date.now();
-                        const fileName = `customers/${customerId || 'temp'}/${timestamp}_${file.name}`;
-                        const storageRef = this.state.firebaseStorage.ref(fileName);
-
-                        const snapshot = await storageRef.put(file);
-                        const downloadURL = await snapshot.ref.getDownloadURL();
-
-                        // Add file info to customer or form data
-                        const target = customerId ?
-                            this.state.customers.find(c => c.id === customerId) :
-                            this.state.formData;
-
-                        if (!target.attachments) {
-                            target.attachments = [];
-                        }
-
-                        target.attachments.push({
-                            id: timestamp.toString(),
-                            name: file.name,
-                            url: downloadURL,
-                            uploadedAt: new Date().toISOString(),
-                            size: file.size
-                        });
-
-                        if (customerId) {
-                            // Save updated customer to Firebase
-                            await this.saveToFirebase('customers', target);
-                        }
-
-                        alert('File uploaded successfully');
-                        this.render();
-                    } else {
-                        alert('File upload requires online connection and Firebase configuration');
-                    }
-                } catch (error) {
-                    console.error('Error uploading file:', error);
-                    alert('Error uploading file. Please try again.');
-                } finally {
-                    this.state.uploadingFile = false;
-                    this.render();
-                }
-            }
-
-            async deleteAttachment(customerId, attachmentId) {
-                if (!confirm('Are you sure you want to delete this attachment?')) return;
-
-                const customer = customerId ?
-                    this.state.customers.find(c => c.id === customerId) :
-                    this.state.formData;
-
-                if (!customer || !customer.attachments) return;
-
-                const attachment = customer.attachments.find(a => a.id === attachmentId);
-                if (!attachment) return;
-
-                try {
-                    // Delete from Firebase Storage
-                    if (this.state.firebaseStorage && this.state.isOnline && attachment.url) {
-                        const storageRef = this.state.firebaseStorage.refFromURL(attachment.url);
-                        await storageRef.delete();
-                    }
-
-                    // Remove from customer data
-                    customer.attachments = customer.attachments.filter(a => a.id !== attachmentId);
-
-                    if (customerId) {
-                        // Update localStorage and Firebase
-                        this.saveAllToFirebase();
-
-                        if (this.state.firebaseDb && this.state.isOnline) {
-                            await this.state.firebaseDb.ref(`customers/${customerId}`).set(customer);
-                        }
-                    }
-
-                    this.render();
-                } catch (error) {
-                    console.error('Error deleting attachment:', error);
-                    alert('Error deleting attachment');
-                }
-            }
-
-            // Contact management functions
-            addContact() {
-                if (!this.state.formData.contacts) {
-                    this.state.formData.contacts = [];
-                }
-
-                this.state.formData.contacts.push({
-                    name: '',
-                    email: '',
-                    cell: '',
-                    title: ''
-                });
-
-                this.render();
-            }
-
-            removeContact(index) {
-                if (this.state.formData.contacts && this.state.formData.contacts.length > 1) {
-                    this.state.formData.contacts.splice(index, 1);
-                    this.render();
-                }
-            }
-
-            updateContactField(index, field, value) {
-                if (!this.state.formData.contacts) {
-                    this.state.formData.contacts = [];
-                }
-
-                if (!this.state.formData.contacts[index]) {
-                    this.state.formData.contacts[index] = {};
-                }
-
-                this.state.formData.contacts[index][field] = value;
-            }
-
-            // CRUD Operations
-            handleAddCustomer() {
-                const newCustomer = {
-                    id: Date.now().toString(),
-                    ...this.state.formData,
-                    industry: this.state.formData.industry === 'Other'
-                        ? (this.state.formData.customIndustry || 'Other')
-                        : this.state.formData.industry,
-                    status: this.state.formData.status || 'prospect',
-                    pipelineStage: this.state.formData.pipelineStage || 'lead',
-                    primaryProducts: this.state.formData.primaryProducts || [],
-                    preferredContact: this.state.formData.preferredContact || 'Any',
-                    attachments: this.state.formData.attachments || [],
-                    contacts: this.state.formData.contacts || [{
-                        name: this.state.formData.contact || '',
-                        email: this.state.formData.email || '',
-                        cell: this.state.formData.phone || '',
-                        title: ''
-                    }],
-                    // Keep legacy fields for backward compatibility
-                    contact: this.state.formData.contacts?.[0]?.name || this.state.formData.contact || '',
-                    email: this.state.formData.contacts?.[0]?.email || this.state.formData.email || '',
-                    phone: this.state.formData.contacts?.[0]?.cell || this.state.formData.phone || '',
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                };
-
-                delete newCustomer.customIndustry;
-
-                this.state.customers.push(newCustomer);
-                this.saveAllToFirebase();
-
-                if (this.state.firebaseDb && this.state.isOnline) {
-                    this.state.firebaseDb.ref(`customers/${newCustomer.id}`).set(newCustomer);
-                }
-
-                this.closeModal();
-            }
-
-            handleUpdateCustomer() {
-                const updatedData = {
-                    ...this.state.formData,
-                    industry: this.state.formData.industry === 'Other'
-                        ? (this.state.formData.customIndustry || 'Other')
-                        : this.state.formData.industry,
-                    primaryProducts: this.state.formData.primaryProducts || [],
-                    preferredContact: this.state.formData.preferredContact || 'Any',
-                    attachments: this.state.formData.attachments || [],
-                    contacts: this.state.formData.contacts || [{
-                        name: this.state.formData.contact || '',
-                        email: this.state.formData.email || '',
-                        cell: this.state.formData.phone || '',
-                        title: ''
-                    }],
-                    // Keep legacy fields for backward compatibility
-                    contact: this.state.formData.contacts?.[0]?.name || this.state.formData.contact || '',
-                    email: this.state.formData.contacts?.[0]?.email || this.state.formData.email || '',
-                    phone: this.state.formData.contacts?.[0]?.cell || this.state.formData.phone || ''
-                };
-
-                delete updatedData.customIndustry;
-
-                const index = this.state.customers.findIndex(c => c.id === this.state.editingCustomer.id);
-                if (index !== -1) {
-                    this.state.customers[index] = {
-                        ...this.state.editingCustomer,
-                        ...updatedData,
-                        updatedAt: new Date().toISOString()
-                    };
-                    
-                    this.saveAllToFirebase();
-                    
-                    if (this.state.firebaseDb && this.state.isOnline) {
-                        this.state.firebaseDb.ref(`customers/${this.state.editingCustomer.id}`)
-                            .set(this.state.customers[index]);
-                    }
-                }
-
-                this.closeModal();
-            }
-
-            handleDeleteCustomer(customerId) {
-                if (confirm('Delete this customer?')) {
-                    this.state.customers = this.state.customers.filter(c => c.id !== customerId);
-                    this.state.opportunities = this.state.opportunities.filter(o => o.customerId !== customerId);
-                    this.state.activities = this.state.activities.filter(a => a.customerId !== customerId);
-
-                    this.saveAllToFirebase();
-
-                    if (this.state.firebaseDb && this.state.isOnline) {
-                        this.state.firebaseDb.ref(`customers/${customerId}`).remove();
-                    }
-
-                    this.render();
-                }
-            }
-
-            handleAddOpportunity() {
-                const newOpportunity = {
-                    id: Date.now().toString(),
-                    ...this.state.formData,
-                    stage: 'new',
-                    salesRep: 'Kaleb Smith',
-                    createdAt: new Date().toISOString()
-                };
-
-                this.state.opportunities.push(newOpportunity);
-                this.saveAllToFirebase();
-
-                if (this.state.firebaseDb && this.state.isOnline) {
-                    this.state.firebaseDb.ref(`opportunities/${newOpportunity.id}`).set(newOpportunity);
-                }
-
-                this.closeModal();
-            }
-
-            handleAddQuote() {
-                const newQuote = {
-                    id: Date.now().toString(),
-                    quoteNumber: `Q-${new Date().getFullYear()}-${String(this.state.quotes.length + 1).padStart(3, '0')}`,
-                    quoteName: this.state.formData.quoteName || 'New Quote',
-                    ...this.state.formData,
-                    status: 'draft',
-                    createdAt: new Date().toISOString()
-                };
-
-                this.state.quotes.push(newQuote);
-                this.saveAllToFirebase();
-
-                if (this.state.firebaseDb && this.state.isOnline) {
-                    this.state.firebaseDb.ref(`quotes/${newQuote.id}`).set(newQuote);
-                }
-
-                this.closeModal();
-            }
-
-            async handleAddActivity() {
-                if (this.state.editingActivity) {
-                    const index = this.state.activities.findIndex(a => a.id === this.state.editingActivity.id);
-                    if (index !== -1) {
-                        this.state.activities[index] = {
-                            ...this.state.editingActivity,
-                            ...this.state.formData,
-                            updatedAt: new Date().toISOString()
-                        };
-                        
-                        this.saveAllToFirebase();
-                        
-                        if (this.state.firebaseDb && this.state.isOnline) {
-                            await this.state.firebaseDb.ref(`activities/${this.state.editingActivity.id}`)
-                                .set(this.state.activities[index]);
-                        }
-                    }
-                } else {
-                    const newActivity = {
-                        id: Date.now().toString(),
-                        ...this.state.formData,
-                        completed: false,
-                        followUpCreated: false,
-                        pipelineStage: this.state.formData.pipelineStage ||
-                            this.state.customers.find(c => c.id === this.state.formData.customerId)?.pipelineStage || 'lead',
-                        createdAt: new Date().toISOString()
-                    };
-
-                    // Handle local audio data upload if online
-                    if (newActivity.audioRecording && newActivity.audioRecording.localData && this.state.firebaseStorage && this.state.isOnline) {
-                        try {
-                            // Convert base64 back to blob and upload
-                            const response = await fetch(newActivity.audioRecording.localData);
-                            const blob = await response.blob();
-
-                            const timestamp = Date.now();
-                            const fileExtension = newActivity.audioRecording.mimeType ? newActivity.audioRecording.mimeType.split('/')[1] : 'webm';
-                            const fileName = `activities/audio/${timestamp}_recording.${fileExtension}`;
-                            const storageRef = this.state.firebaseStorage.ref(fileName);
-
-                            const metadata = {
-                                contentType: newActivity.audioRecording.mimeType || 'audio/webm'
-                            };
-
-                            const snapshot = await storageRef.put(blob, metadata);
-                            const downloadURL = await snapshot.ref.getDownloadURL();
-
-                            // Replace local data with URL
-                            newActivity.audioRecording = {
-                                url: downloadURL,
-                                duration: newActivity.audioRecording.duration,
-                                recordedAt: newActivity.audioRecording.recordedAt,
-                                mimeType: newActivity.audioRecording.mimeType
-                            };
-                        } catch (error) {
-                            console.error('Error uploading local audio:', error);
-                        }
-                    }
-
-                    this.state.activities.push(newActivity);
-                    this.saveAllToFirebase();
-
-                    if (this.state.firebaseDb && this.state.isOnline) {
-                        await this.state.firebaseDb.ref(`activities/${newActivity.id}`).set(newActivity);
-                    }
-
-                    if (this.state.formData.addToCalendar && this.state.googleCalendarConnected) {
-                        await this.addToGoogleCalendar(newActivity);
-                    }
-                }
-
-                this.closeModal();
-            }
-
-            markActivityComplete(activityId) {
-                const activity = this.state.activities.find(a => a.id === activityId);
-                if (activity) {
-                    activity.completed = true;
-                    activity.completedDate = new Date().toISOString();
-
-                    this.saveAllToFirebase();
-
-                    if (this.state.firebaseDb && this.state.isOnline) {
-                        this.state.firebaseDb.ref(`activities/${activity.id}`).set(activity);
-                    }
-
-                    this.state.showFollowUp = activity;
-                    this.render();
-                }
-            }
-
-            createFollowUp(originalActivity, followUpData) {
-                const newActivity = {
-                    id: Date.now().toString(),
-                    customerId: originalActivity.customerId,
-                    type: followUpData.type,
-                    subject: followUpData.subject,
-                    date: followUpData.date,
-                    time: followUpData.time,
-                    notes: followUpData.notes,
-                    completed: false,
-                    followUpCreated: false,
-                    pipelineStage: followUpData.pipelineStage,
-                    createdAt: new Date().toISOString()
-                };
-
-                this.state.activities.push(newActivity);
-                originalActivity.followUpCreated = true;
-
-                this.saveAllToFirebase();
-
-                if (this.state.firebaseDb && this.state.isOnline) {
-                    this.state.firebaseDb.ref(`activities/${newActivity.id}`).set(newActivity);
-                    this.state.firebaseDb.ref(`activities/${originalActivity.id}`).set(originalActivity);
-                }
-
-                this.state.showFollowUp = null;
-                this.render();
-            }
-
-            viewActivity(activityId) {
-                const activity = this.state.activities.find(a => a.id === activityId);
-                if (activity) {
-                    this.state.viewingActivity = activity;
-                    this.state.showModal = 'view-activity';
-                    this.render();
-                }
-            }
-
-            editActivity(activityId) {
-                const activity = this.state.activities.find(a => a.id === activityId);
-                if (activity) {
-                    this.state.editingActivity = activity;
-                    this.state.formData = { ...activity };
-                    this.state.showModal = 'activity';
-                    this.render();
-                }
-            }
-
-            deleteActivity(id) {
-                if (confirm('Delete this activity?')) {
-                    this.state.activities = this.state.activities.filter(a => a.id !== id);
-                    this.saveAllToFirebase();
-
-                    if (this.state.firebaseDb && this.state.isOnline) {
-                        this.state.firebaseDb.ref(`activities/${id}`).remove();
-                    }
-
-                    this.render();
-                }
-            }
-
-            // Modal handling
-            openModal(type) {
-                this.state.showModal = type;
-                this.state.formData = {};
-                this.state.editingCustomer = null;
-                this.state.editingActivity = null;
-                this.state.viewingActivity = null;
-                this.render();
-            }
-
-            closeModal() {
-                this.state.showModal = null;
-                this.state.formData = {};
-                this.state.editingCustomer = null;
-                this.state.editingActivity = null;
-                this.state.viewingActivity = null;
-                this.render();
-            }
-
-            // View handling
-            setView(view) {
-                this.state.activeView = view;
-                this.state.mobileMenuOpen = false;
-                this.state.globalSearchResults = null;
-                this.state.globalSearchTerm = '';
-                this.closeModal();
-                this.render();
-            }
-
-            toggleMobileMenu() {
-                this.state.mobileMenuOpen = !this.state.mobileMenuOpen;
-                this.render();
-            }
-
-            updateSearchTerm(value) {
-                this.state.searchTerm = value;
-                this.render();
-            }
-
-            updateIndustryFilter(value) {
-                this.state.industryFilter = value;
-                this.render();
-            }
-
-            updatePipelineFilter(value) {
-                this.state.pipelineFilter = value;
-                this.render();
-            }
-
-            updateStatusFilter(value) {
-                this.state.statusFilter = value;
-                this.render();
-            }
-
-            updateActivityFilter(value) {
-                this.state.activityFilter = value;
-                this.render();
-            }
-
-            updateFormField(field, value) {
-                this.state.formData[field] = value;
-                // Don't render on every keystroke - let the form handle its own state
-            }
-
-            updateCharCount(field, value, maxLength) {
-                const counter = document.getElementById(`${field}-counter`);
-                if (counter) {
-                    counter.textContent = `${value.length}/${maxLength}`;
-                }
-            }
-
-            toggleProductSelection(product) {
-                if (!this.state.formData.primaryProducts) {
-                    this.state.formData.primaryProducts = [];
-                }
-
-                const index = this.state.formData.primaryProducts.indexOf(product);
-                if (index > -1) {
-                    this.state.formData.primaryProducts.splice(index, 1);
-                } else {
-                    this.state.formData.primaryProducts.push(product);
-                }
-
-                this.render();
-            }
-
-            editCustomer(customerId) {
-                const customer = this.state.customers.find(c => c.id === customerId);
-                if (customer) {
-                    this.state.editingCustomer = customer;
-                    const isCustomIndustry = customer.industry && !INDUSTRIES.includes(customer.industry);
-                    this.state.formData = {
-                        ...customer,
-                        industry: isCustomIndustry ? 'Other' : customer.industry,
-                        customIndustry: isCustomIndustry ? customer.industry : '',
-                        contacts: customer.contacts || [{
-                            name: customer.contact || '',
-                            email: customer.email || '',
-                            cell: customer.phone || '',
-                            title: ''
-                        }]
-                    };
-                    this.state.showModal = 'customer';
-                    this.render();
-                }
-            }
-
-            viewCustomerDetails(customerId) {
-                this.state.viewingCustomerId = customerId;
-                this.state.customerDetailTab = 'opportunities';
-                this.state.showModal = 'customer-details';
-                this.render();
-            }
-
-            scheduleActivityForCustomer(customerId) {
-                const customer = this.state.customers.find(c => c.id === customerId);
-                if (customer) {
-                    this.state.formData = {
-                        customerId: customer.id,
-                        type: 'call',
-                        subject: `Follow up with ${customer.name}`,
-                        date: new Date(Date.now()).toISOString().split('T')[0],
-                        time: '2:00 PM',
-                        notes: ''
-                    };
-                    this.state.showModal = 'activity';
-                    this.render();
-                }
-            }
-
-            createActivityForOpportunity(oppId) {
-                const opp = this.state.opportunities.find(o => o.id === oppId);
-                if (opp) {
-                    this.state.formData = {
-                        customerId: opp.customerId,
-                        opportunityId: opp.id,
-                        subject: `Follow up: ${opp.title}`,
-                        type: 'call',
-                        date: new Date(Date.now()).toISOString().split('T')[0],
-                        time: '2:00 PM',
-                        notes: ''
-                    };
-                    this.state.showModal = 'activity';
-                    this.render();
-                }
-            }
-
-            handleModalSubmit() {
-                switch (this.state.showModal) {
-                    case 'customer':
-                        if (this.state.editingCustomer) {
-                            this.handleUpdateCustomer();
-                        } else {
-                            this.handleAddCustomer();
-                        }
-                        break;
-                    case 'opportunity':
-                        this.handleAddOpportunity();
-                        break;
-                    case 'quote':
-                        this.handleAddQuote();
-                        break;
-                    case 'activity':
-                        this.handleAddActivity();
-                        break;
-                }
-            }
-
-            showOpportunityDetails(oppId) {
-                this.state.selectedOpp = this.state.opportunities.find(o => o.id === oppId);
-                this.render();
-            }
-
-            closeOpportunityDetails() {
-                this.state.selectedOpp = null;
-                this.render();
-            }
-
-            handleDragStart(event, oppId) {
-                event.dataTransfer.setData('opportunityId', oppId);
-                event.target.classList.add('dragging');
-            }
-
-            // ✅ UPDATE OPPORTUNITY DRAG & DROP - ADD Firebase save:
-            handleDrop(event, newStage) {
-                event.preventDefault();
-                const oppId = event.dataTransfer.getData('opportunityId');
-                const opportunity = this.state.opportunities.find(o => o.id === oppId);
-
-                if (opportunity) {
-                    opportunity.stage = newStage;
-                    opportunity.updatedAt = new Date().toISOString();
-                    
-                    // Save to Firebase
-                    this.saveToFirebase('opportunities', opportunity);
-                    
-                    this.render();
-                }
-
-                document.querySelectorAll('.dragging').forEach(el => {
-                    el.classList.remove('dragging');
-                });
-            }
-
-            closeFollowUp() {
-                this.state.showFollowUp = null;
-                this.render();
-            }
-
-            selectSuggestedAction(subject, stage) {
-                document.getElementById('followup-subject').value = subject;
-                document.getElementById('followup-stage').value = stage;
-            }
-
-            createFollowUpFromModal() {
-                const followUpData = {
-                    type: document.getElementById('followup-type').value,
-                    subject: document.getElementById('followup-subject').value,
-                    date: document.getElementById('followup-date').value,
-                    time: document.getElementById('followup-time').value,
-                    notes: document.getElementById('followup-notes').value,
-                    pipelineStage: document.getElementById('followup-stage').value
-                };
-
-                if (!followUpData.subject) {
-                    alert('Please enter a subject');
-                    return;
-                }
-
-                this.createFollowUp(this.state.showFollowUp, followUpData);
-            }
-
-            toggleShowCompletedActivities() {
-                this.state.showCompletedActivities = !this.state.showCompletedActivities;
-                this.render();
-            }
-
-            toggleShowCompletedDashboard() {
-                this.state.showCompletedActivities = !this.state.showCompletedActivities;
-                this.render();
-            }
-
-            toggleShowCompletedPipeline() {
-                this.state.showCompletedActivities = !this.state.showCompletedActivities;
-                this.render();
-            }
-
-            toggleShowCompletedModal() {
-                this.state.showCompletedActivities = !this.state.showCompletedActivities;
-                this.render();
-            }
-
             // Render methods
             render() {
                 const app = document.getElementById('app');
@@ -4019,27 +3314,32 @@
                     </div>
                 `;
             }
-            // ✅ ADD CONNECTION STATUS INDICATOR TO YOUR NAVIGATION:
+            // ✅ REPLACE renderNavigationStatus() WITH THIS AZURE SQL VERSION:
             renderNavigationStatus() {
                 return `
                     <div class="mt-8 pt-8 border-t border-gray-800">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center space-x-2">
-                                ${this.state.isOnline ? 
+                                ${this.state.azureConnected ? 
                                     this.icon('Cloud', 16, 'text-green-500') : 
                                     this.icon('CloudOff', 16, 'text-red-500')
                                 }
                                 <span class="text-xs text-gray-400">
-                                    ${this.state.isOnline ? 'Firebase Connected' : 'Offline Mode'}
+                                    ${this.state.azureConnected ? 'Azure SQL Connected' : 'Offline Mode'}
                                 </span>
                             </div>
                             ${this.state.isSyncing ? 
                                 this.icon('RefreshCw', 16, 'text-blue-500 animate-spin') : ''
                             }
                         </div>
-                        ${this.state.lastSync ? `
+                        ${this.state.lastApiCall ? `
                             <p class="text-xs text-gray-500">
-                                Last sync: ${new Date(this.state.lastSync).toLocaleTimeString()}
+                                Last sync: ${new Date(this.state.lastApiCall).toLocaleTimeString()}
+                            </p>
+                        ` : ''}
+                        ${this.state.apiEndpoint ? `
+                            <p class="text-xs text-gray-400 truncate" title="${this.state.apiEndpoint}">
+                                API: ${this.state.apiEndpoint.split('.')[0]}...
                             </p>
                         ` : ''}
                     </div>
