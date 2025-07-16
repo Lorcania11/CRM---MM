@@ -30,7 +30,8 @@
             https://api.apitube.io/
             https://api.stlouisfed.org/
             https://login.microsoftonline.com
-            https://graph.microsoft.com;
+            https://graph.microsoft.com
+            https://func-majormetals-crm.azurewebsites.net;
         frame-src 
             https://accounts.google.com/ 
             https://apis.google.com/
@@ -374,7 +375,7 @@
                 this.accessToken = null;
                 this.msalInstance = null;
                 this.msalReady = false;
-                
+
                 this.state = {
                     activeView: 'dashboard',
                     customers: [],
@@ -537,14 +538,14 @@
                     this.state.opportunities = opportunities || [];
                     this.state.activities = activities || [];
                     this.state.quotes = quotes || [];
-                    
+
                     // Connection successful
                     this.state.azureHealthy = true;
                     this.state.backendStatus = 'connected';
                     this.state.connectionError = null;
                     this.state.lastSync = new Date().toISOString();
                     this.state.isSyncing = false;
-                    
+
                     console.log('✅ Azure loading completed successfully');
                     this.render();
 
@@ -554,15 +555,15 @@
                     this.state.azureHealthy = false;
                     this.state.backendStatus = 'error';
                     this.state.connectionError = error.message;
-                    
+
                     // Initialize with empty data since we're Azure-only
                     this.state.customers = [];
                     this.state.opportunities = [];
                     this.state.activities = [];
                     this.state.quotes = [];
-                    
+
                     this.render();
-                    
+
                     // Show connection error
                     this.showConnectionError(error);
                 }
@@ -571,7 +572,7 @@
             async saveToAzure(entityType, data) {
                 try {
                     console.log(`💾 Saving ${entityType} to Azure SQL...`);
-                    
+
                     const response = await fetch(`${this.AZURE_API_BASE}/${entityType}`, {
                         method: 'POST',
                         headers: {
@@ -588,7 +589,7 @@
 
                     const result = await response.json();
                     console.log(`✅ ${entityType} saved to Azure:`, result);
-                    
+
                     this.state.lastSync = new Date().toISOString();
                     return true;
 
@@ -602,7 +603,7 @@
             async updateInAzure(entityType, id, data) {
                 try {
                     console.log(`🔄 Updating ${entityType} ${id} in Azure SQL...`);
-                    
+
                     const response = await fetch(`${this.AZURE_API_BASE}/${entityType}/${id}`, {
                         method: 'PUT',
                         headers: {
@@ -619,7 +620,7 @@
 
                     const result = await response.json();
                     console.log(`✅ ${entityType} updated in Azure:`, result);
-                    
+
                     this.state.lastSync = new Date().toISOString();
                     return true;
 
@@ -633,7 +634,7 @@
             async deleteFromAzure(entityType, id) {
                 try {
                     console.log(`🗑️ Deleting ${entityType} ${id} from Azure SQL...`);
-                    
+
                     const response = await fetch(`${this.AZURE_API_BASE}/${entityType}/${id}`, {
                         method: 'DELETE',
                         headers: {
@@ -663,27 +664,27 @@
                     const response = await fetch(`${this.AZURE_API_BASE}/health`, {
                         headers: { 'Accept': 'application/json' }
                     });
-                    
+
                     if (!response.ok) {
                         throw new Error(`Health check failed: ${response.status}`);
                     }
-                    
+
                     const health = await response.json();
                     console.log('🏥 Azure Health:', health);
-                    
+
                     this.state.azureHealthy = health.status === 'healthy';
                     this.state.backendStatus = this.state.azureHealthy ? 'connected' : 'error';
                     this.state.connectionError = this.state.azureHealthy ? null : 'Health check failed';
-                    
+
                     if (this.state.azureHealthy) {
                         alert(`✅ Azure SQL Database Connected!\n\nServer: ${health.server || 'Connected'}\nDatabase: ${health.database_name || 'MajorMetalsCRM'}\nUser: ${health.user || 'CRM'}\nTime: ${new Date(health.timestamp).toLocaleString()}`);
                     } else {
                         alert('❌ Azure SQL Database Connection Failed');
                     }
-                    
+
                     this.render();
                     return this.state.azureHealthy;
-                    
+
                 } catch (error) {
                     console.error('❌ Azure health check failed:', error);
                     this.state.azureHealthy = false;
@@ -701,7 +702,7 @@
                     const response = await fetch(`${this.AZURE_API_BASE}/dashboard/metrics`, {
                         headers: { 'Accept': 'application/json' }
                     });
-                    
+
                     if (response.ok) {
                         const metrics = await response.json();
                         console.log('📊 Azure metrics loaded:', metrics);
@@ -763,11 +764,11 @@
                         </div>
                     </div>
                 `;
-                
+
                 // Add error modal to DOM
                 const existingModal = document.getElementById('connection-error-modal');
                 if (existingModal) existingModal.remove();
-                
+
                 const modalDiv = document.createElement('div');
                 modalDiv.id = 'connection-error-modal';
                 modalDiv.innerHTML = errorModal;
@@ -782,7 +783,7 @@
                 // Remove error modal
                 const errorModal = document.getElementById('connection-error-modal');
                 if (errorModal) errorModal.remove();
-                
+
                 // Retry loading data
                 this.loadFromAzure();
             }
@@ -805,7 +806,7 @@
 
                 // Check Azure connection on startup
                 await this.checkAzureConnection();
-                
+
                 // Check connection every 30 seconds
                 setInterval(() => this.checkAzureConnection(), 30000);
 
@@ -850,7 +851,7 @@
 
                 // Save to Azure SQL Database ONLY
                 const success = await this.saveToAzure('customers', newCustomer);
-                
+
                 if (success) {
                     this.state.customers.push(newCustomer);
                     this.closeModal();
@@ -875,7 +876,7 @@
 
                 // Update in Azure SQL Database ONLY
                 const success = await this.updateInAzure('customers', this.state.editingCustomer.id, updatedData);
-                
+
                 if (success) {
                     const index = this.state.customers.findIndex(c => c.id === this.state.editingCustomer.id);
                     if (index !== -1) {
@@ -892,7 +893,7 @@
             async handleDeleteCustomer(customerId) {
                 if (confirm('Delete this customer and all related data from Azure SQL Database?')) {
                     const success = await this.deleteFromAzure('customers', customerId);
-                    
+
                     if (success) {
                         this.state.customers = this.state.customers.filter(c => c.id !== customerId);
                         this.state.opportunities = this.state.opportunities.filter(o => o.customerId !== customerId);
@@ -1025,7 +1026,7 @@
 
                 if (success) {
                     this.state.activities.push(newActivity);
-                    
+
                     // Update original activity
                     originalActivity.followUpCreated = true;
                     await this.updateInAzure('activities', originalActivity.id, originalActivity);
@@ -1038,7 +1039,7 @@
             async deleteActivity(id) {
                 if (confirm('Delete this activity from Azure SQL Database?')) {
                     const success = await this.deleteFromAzure('activities', id);
-                    
+
                     if (success) {
                         this.state.activities = this.state.activities.filter(a => a.id !== id);
                         this.render();
@@ -1050,13 +1051,13 @@
             async bulkUpdateStage(stage) {
                 const selectedIds = Array.from(this.state.selectedItems);
                 let successCount = 0;
-                
+
                 for (const id of selectedIds) {
                     const customer = this.state.customers.find(c => c.id === id);
                     if (customer) {
                         customer.pipelineStage = stage;
                         customer.updatedAt = new Date().toISOString();
-                        
+
                         const success = await this.updateInAzure('customers', id, customer);
                         if (success) successCount++;
                     }
@@ -1078,7 +1079,7 @@
 
                 const selectedIds = Array.from(this.state.selectedItems);
                 let successCount = 0;
-                
+
                 for (const id of selectedIds) {
                     const success = await this.deleteFromAzure('customers', id);
                     if (success) {
@@ -2967,7 +2968,7 @@
                 return `${hours.toString().padStart(2, '0')}:${minutes}`;
             }
 
-            
+
             // Icon components - Enhanced with Market Intelligence icons
             icon(name, size = 20, className = "") {
                 const icons = {
@@ -3320,17 +3321,17 @@
                     <div class="mt-8 pt-8 border-t border-gray-800">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center space-x-2">
-                                ${this.state.azureConnected ? 
-                                    this.icon('Cloud', 16, 'text-green-500') : 
-                                    this.icon('CloudOff', 16, 'text-red-500')
-                                }
+                                ${this.state.azureConnected ?
+                        this.icon('Cloud', 16, 'text-green-500') :
+                        this.icon('CloudOff', 16, 'text-red-500')
+                    }
                                 <span class="text-xs text-gray-400">
                                     ${this.state.azureConnected ? 'Azure SQL Connected' : 'Offline Mode'}
                                 </span>
                             </div>
-                            ${this.state.isSyncing ? 
-                                this.icon('RefreshCw', 16, 'text-blue-500 animate-spin') : ''
-                            }
+                            ${this.state.isSyncing ?
+                        this.icon('RefreshCw', 16, 'text-blue-500 animate-spin') : ''
+                    }
                         </div>
                         ${this.state.lastApiCall ? `
                             <p class="text-xs text-gray-500">
