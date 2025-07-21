@@ -17,11 +17,11 @@ module.exports = async function (context, req) {
         const customer = req.body;
         const pool = await getPool();
         const transaction = new sql.Transaction(pool);
-        
+
         context.log(`Creating customer: ${customer.name}`);
-        
+
         await transaction.begin();
-        
+
         try {
             // Insert customer record
             await transaction.request()
@@ -80,12 +80,18 @@ module.exports = async function (context, req) {
             await transaction.commit();
             context.log(`✅ Customer ${customer.name} created successfully`);
             sendResponse(context, { success: true, id: customer.id }, 201);
-            
+
         } catch (error) {
             await transaction.rollback();
             throw error;
         }
     } catch (error) {
-        handleError(context, error);
+        context.res = {
+            status: 500,
+            body: {
+                error: error.message,
+                stack: error.stack
+            }
+        };
     }
 };
