@@ -322,7 +322,7 @@
             "15ga (.072)", "16ga (.065)", "17ga (.058)", "18ga (.049)", "19ga (.042)", "20ga (.035)",
 
             "Custom Size Tube",
-    
+
             "Custom Cut-to-Length",
 
             "HR", "HRP&O", "CR", "G30", "G40", "G60", "G90", "G115", "G185", "G210", "G235", "Galvaneal",
@@ -364,7 +364,7 @@
                     isOnline: navigator.onLine,
                     isSyncing: false,
                     lastSync: null,
-                    azureConnected: false,  
+                    azureConnected: false,
                     editingCustomer: null,
                     mobileMenuOpen: false,
                     selectedOpp: null,
@@ -403,7 +403,7 @@
                         isOnline: navigator.onLine,
                         isSyncing: false,
                         lastSync: null,
-                        activeRequests: 0,  
+                        activeRequests: 0,
                         lastError: null
                     },
                     showExcelModal: false,
@@ -482,16 +482,16 @@
 
                     // Load all data in parallel from Azure Functions
                     const [customersResponse, opportunitiesResponse, activitiesResponse, quotesResponse] = await Promise.all([
-                        fetch(`${this.AZURE_API_BASE}/customers`, {
+                        fetch(`${this.AZURE_API_BASE}/customers/get`, {
                             headers: { 'Accept': 'application/json' }
                         }),
-                        fetch(`${this.AZURE_API_BASE}/opportunities`, {
+                        fetch(`${this.AZURE_API_BASE}/opportunities/get`, {
                             headers: { 'Accept': 'application/json' }
                         }),
-                        fetch(`${this.AZURE_API_BASE}/activities`, {
+                        fetch(`${this.AZURE_API_BASE}/activities/get`, {
                             headers: { 'Accept': 'application/json' }
                         }),
-                        fetch(`${this.AZURE_API_BASE}/quotes`, {
+                        fetch(`${this.AZURE_API_BASE}/quotes/get`, {
                             headers: { 'Accept': 'application/json' }
                         })
                     ]);
@@ -529,7 +529,7 @@
                     this.state.syncStatus.activeRequests--;
 
                     console.log('✅ Azure loading completed successfully');
-                    this.render();  
+                    this.render();
 
                 } catch (error) {
                     console.error('❌ Error loading from Azure:', error);
@@ -581,7 +581,7 @@
                     console.log(`✅ ${entityType} saved to Azure:`, result);
                     // KJS added 
                     this.state.syncStatus.lastSync = new Date().toISOString();
-                    this.state.syncStatus.activeRequests--;  
+                    this.state.syncStatus.activeRequests--;
                     return true;
 
                 } catch (error) {
@@ -612,7 +612,7 @@
                     // KJS ADDED THIS CONFLICT CHECK:
                     if (response.status === 409) {
                         this.showNotification(
-                            'This record was updated by someone else. Please refresh and try again.', 
+                            'This record was updated by someone else. Please refresh and try again.',
                             'warning'
                         );
                         await this.loadFromAzure();  // Reload latest data
@@ -825,7 +825,7 @@
                     this.checkAzureConnection(); // Immediately check Azure
                     this.render();
                 });
-                
+
                 window.addEventListener('offline', () => {
                     console.log('📵 Network connection lost');
                     this.state.syncStatus.isOnline = false;
@@ -1363,11 +1363,11 @@
                 try {
                     this.state.isLoading = true;
                     const response = await fetch(endpoint);
-                    
+
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
-                    
+
                     const data = await response.json();
                     return data;
                 } catch (error) {
@@ -3566,7 +3566,7 @@
             // KJS added sync status
             renderSyncStatus() {
                 const { syncStatus } = this.state;
-                
+
                 // Only show if there's something to report
                 if (!syncStatus.isOnline || syncStatus.isSyncing || syncStatus.lastError) {
                     return `
@@ -3589,7 +3589,7 @@
                         </div>
                     `;
                 }
-                
+
                 return '';
             }
 
