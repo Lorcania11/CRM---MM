@@ -11,20 +11,8 @@
         default-src 'self';
         script-src 'self' 'unsafe-inline' 'unsafe-eval'
             https://cdn.tailwindcss.com
-            https://www.gstatic.com/
-            https://apis.google.com/
-            https://accounts.google.com/
-            https://www.googleapis.com/
-            https://securetoken.googleapis.com/
-            https://www.google.com/
-            https://www.googletagmanager.com/
             https://alcdn.msauth.net/;
         connect-src 'self'
-            https://*.googleapis.com
-            https://*.google.com
-            https://securetoken.googleapis.com/
-            https://www.googleapis.com/
-            https://accounts.google.com/
             https://api.commoditic.com/
             https://commodities-api.com/
             https://api.apitube.io/
@@ -34,23 +22,12 @@
             https://func-majormetals-crm.azurewebsites.net
             https://func-majormetals-crm-apim2.azure-api.net;
         frame-src 
-            https://accounts.google.com/ 
-            https://apis.google.com/
-            https://content.googleapis.com/
-            https://www.google.com/
-            https://securetoken.googleapis.com/
             https://outlook.office365.com/
             https://outlook.office.com/;
         style-src 'self' 'unsafe-inline' 
-            https://cdn.tailwindcss.com
-            https://accounts.google.com/
-            https://www.googleapis.com/;
-        img-src 'self' data: https: blob: 
-            https://*.googleusercontent.com
-            https://*.google.com
-            https://*.gstatic.com;
-        font-src 'self' data: 
-            https://fonts.gstatic.com;
+            https://cdn.tailwindcss.com;
+        img-src 'self' data: https: blob:;
+        font-src 'self' data:;
 ">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -250,23 +227,12 @@
 <body>
     <div id="app"></div>
 
-    <!-- Google Identity Services for new auth -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <!-- Google API Script for Calendar API -->
-    <script src="https://apis.google.com/js/api.js"></script>
     <!-- Microsoft Azure -->
     <script src="https://alcdn.msauth.net/browser/2.30.0/js/msal-browser.min.js"></script>
 
     <script>
         console.log("📜 AZURE-ONLY CRM STARTED");
 
-        // Google Calendar configuration
-        const GOOGLE_CONFIG = {
-            clientId: '321138365753-d9gndqf1mliep73f58g36p0hvj21frcp.apps.googleusercontent.com',
-            apiKey: 'AIzaSyBFsW2Snv1c9OBcgh5P70KAEZ1JGYK_uXE',
-            scope: 'https://www.googleapis.com/auth/calendar.events',
-            discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest']
-        };
         const MICROSOFT_CONFIG = {
             // Azure App Configuration - Using your provided credentials
             clientId: '1e620e1b-c6dc-4e6c-b0fd-b403d1e008df',
@@ -352,16 +318,18 @@
 
         // Products list
         const PRODUCTS = [
-            "Square Tubing - 1x1", "Square Tubing - 1.5x1.5", "Square Tubing - 2x2",
-            "Square Tubing - 2.5x2.5", "Square Tubing - 3x3", "Square Tubing - 4x4",
-            "Rectangle Tubing - 2x1", "Rectangle Tubing - 3x2", "Rectangle Tubing - 4x2",
-            "Rectangle Tubing - 4x3", "Rectangle Tubing - 6x2", "Rectangle Tubing - 6x4",
-            "Round Pipe - 1 inch", "Round Pipe - 1.5 inch", "Round Pipe - 2 inch",
-            "Round Pipe - 2.5 inch", "Round Pipe - 3 inch", "Round Pipe - 4 inch",
+            "1/4ga (.250)", "3/16ga (.1875)", "7ga (.180)", "8ga (.165)", "9ga (.148)", "10ga (.134)", "1/8ga (.125)", "11ga (.120)", "12ga (.109)", "(.104)ga", "13ga (.095)", "14ga (.083)", "(.076)ga",
+            "15ga (.072)", "16ga (.065)", "17ga (.058)", "18ga (.049)", "19ga (.042)", "20ga (.035)",
+
             "Custom Size Tube",
+    
             "Custom Cut-to-Length",
-            "Galvanized", "HR", "HRPO", "Gavaneal", "CR",
-            "Other"
+
+            "HR", "HRP&O", "CR", "G30", "G40", "G60", "G90", "G115", "G185", "G210", "G235", "Galvaneal",
+
+            "DS", "EDDS", "C1006", "C1008", "C1010", "C1015", "C1020", "C1022", "A500B", "A500C", "A513", "SS33", "SS36", "SS40", "SS50", "SS55", "Grade 46", "HSLA 45", "HSLA 50", "HSLA 60", "HSLA 70",
+
+            "A787", "A1076", "A1085"
         ];
 
         // Contact methods
