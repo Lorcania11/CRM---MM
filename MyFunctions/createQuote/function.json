@@ -5,11 +5,8 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": [
-        "post",
-        "options"
-      ],
-      "route": "quotes/create"
+      "methods": ["post", "options"],
+      "route": "quotes"
     },
     {
       "type": "http",
@@ -17,5 +14,6 @@
       "name": "res"
     }
   ],
-  "scriptFile": "index.js"
+  "scriptFile": "../azure_functions_api.js",
+  "entryPoint": "createQuote"
 }

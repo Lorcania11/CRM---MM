@@ -5,10 +5,7 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": [
-        "get",
-        "options"
-      ],
+      "methods": ["get", "options"],
       "route": "health"
     },
     {
@@ -17,5 +14,6 @@
       "name": "res"
     }
   ],
-  "scriptFile": "index.js"
+  "scriptFile": "../azure_functions_api.js",
+  "entryPoint": "healthCheck"
 }

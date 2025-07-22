@@ -5,11 +5,8 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": [
-        "put",
-        "options"
-      ],
-      "route": "activities/update/{id}"
+      "methods": ["put", "options"],
+      "route": "activities/{id}"
     },
     {
       "type": "http",
@@ -17,5 +14,6 @@
       "name": "res"
     }
   ],
-  "scriptFile": "index.js"
+  "scriptFile": "../azure_functions_api.js",
+  "entryPoint": "updateActivity"
 }
