@@ -5,13 +5,17 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["get", "options"],
-      "route": "activities"
+      "methods": [
+        "get",
+        "options"
+      ],
+      "route": "activities/get"
     },
     {
       "type": "http",
       "direction": "out",
       "name": "res"
     }
-  ]
+  ],
+  "scriptFile": "index.js"
 }

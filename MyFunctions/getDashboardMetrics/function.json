@@ -5,7 +5,10 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["get", "options"],
+      "methods": [
+        "get",
+        "options"
+      ],
       "route": "dashboard/metrics"
     },
     {
@@ -13,5 +16,6 @@
       "direction": "out",
       "name": "res"
     }
-  ]
+  ],
+  "scriptFile": "index.js"
 }

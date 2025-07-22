@@ -5,13 +5,17 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["put", "options"],
-      "route": "opportunities/{id}"
+      "methods": [
+        "put",
+        "options"
+      ],
+      "route": "opportunities/update/{id}"
     },
     {
       "type": "http",
       "direction": "out",
       "name": "res"
     }
-  ]
+  ],
+  "scriptFile": "index.js"
 }

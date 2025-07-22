@@ -5,13 +5,17 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["delete", "options"],
-      "route": "customers/{id}"
+      "methods": [
+        "delete",
+        "options"
+      ],
+      "route": "customers/delete/{id}"
     },
     {
       "type": "http",
       "direction": "out",
       "name": "res"
     }
-  ]
+  ],
+  "scriptFile": "index.js"
 }
