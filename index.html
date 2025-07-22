@@ -396,7 +396,7 @@
                     isOnline: navigator.onLine,
                     isSyncing: false,
                     lastSync: null,
-                    azureConnected: false,  // ✅ ADD THIS - Azure SQL connection status
+                    azureConnected: false,  
                     editingCustomer: null,
                     mobileMenuOpen: false,
                     selectedOpp: null,
@@ -430,6 +430,13 @@
                         autoSyncEnabled: false,
                         lastSync: null,
                         embeddedUrl: null
+                    },
+                    syncStatus: {
+                        isOnline: navigator.onLine,
+                        isSyncing: false,
+                        lastSync: null,
+                        activeRequests: 0,  
+                        lastError: null
                     },
                     showExcelModal: false,
                     excelEditingCell: null,
@@ -494,9 +501,14 @@
             // =====================================
 
             async loadFromAzure() {
+                if (!navigator.onLine) {
+                    this.showNotification('No internet connection. Cannot load data.', 'error');
+                    return;
+                }
                 try {
                     console.log('🔄 Loading all data from Azure SQL Database...');
-                    this.state.isSyncing = true;
+                    this.state.syncStatus.isSyncing = true;
+                    this.state.syncStatus.activeRequests++;
                     this.state.backendStatus = 'connecting';
                     this.render();
 
@@ -540,22 +552,25 @@
                     this.state.activities = activities || [];
                     this.state.quotes = quotes || [];
 
-                    // Connection successful
+                    // Connection successful - KJS added
                     this.state.azureHealthy = true;
                     this.state.backendStatus = 'connected';
                     this.state.connectionError = null;
-                    this.state.lastSync = new Date().toISOString();
-                    this.state.isSyncing = false;
+                    this.state.syncStatus.lastSync = new Date().toISOString();
+                    this.state.syncStatus.isSyncing = false;
+                    this.state.syncStatus.activeRequests--;
 
                     console.log('✅ Azure loading completed successfully');
-                    this.render();
+                    this.render();  
 
                 } catch (error) {
                     console.error('❌ Error loading from Azure:', error);
-                    this.state.isSyncing = false;
+                    this.state.syncStatus.isSyncing = false;
+                    this.state.syncStatus.activeRequests--;
                     this.state.azureHealthy = false;
                     this.state.backendStatus = 'error';
                     this.state.connectionError = error.message;
+                    this.state.syncStatus.lastError = error.message;
 
                     // Initialize with empty data since we're Azure-only
                     this.state.customers = [];
@@ -571,8 +586,14 @@
             }
 
             async saveToAzure(entityType, data) {
+                // KJS added this check
+                if (!navigator.onLine) {
+                    this.showNotification('No internet connection. Please try again when online.', 'error');
+                    return false;
+                }
                 try {
                     console.log(`💾 Saving ${entityType} to Azure SQL...`);
+                    this.state.syncStatus.activeRequests++;  // KJS added to track active requests
 
                     const response = await fetch(`${this.AZURE_API_BASE}/${entityType}`, {
                         method: 'POST',
@@ -590,8 +611,9 @@
 
                     const result = await response.json();
                     console.log(`✅ ${entityType} saved to Azure:`, result);
-
-                    this.state.lastSync = new Date().toISOString();
+                    // KJS added 
+                    this.state.syncStatus.lastSync = new Date().toISOString();
+                    this.state.syncStatus.activeRequests--;  
                     return true;
 
                 } catch (error) {
@@ -602,8 +624,14 @@
             }
 
             async updateInAzure(entityType, id, data) {
+                // KJS added this check 
+                if (!navigator.onLine) {
+                    this.showNotification('No internet connection. Please try again when online.', 'error');
+                    return false;
+                }
                 try {
                     console.log(`🔄 Updating ${entityType} ${id} in Azure SQL...`);
+                    this.state.syncStatus.activeRequests++;  // KJS added
 
                     const response = await fetch(`${this.AZURE_API_BASE}/${entityType}/${id}`, {
                         method: 'PUT',
@@ -613,6 +641,15 @@
                         },
                         body: JSON.stringify(data)
                     });
+                    // KJS ADDED THIS CONFLICT CHECK:
+                    if (response.status === 409) {
+                        this.showNotification(
+                            'This record was updated by someone else. Please refresh and try again.', 
+                            'warning'
+                        );
+                        await this.loadFromAzure();  // Reload latest data
+                        return false;
+                    }
 
                     if (!response.ok) {
                         const errorText = await response.text();
@@ -625,10 +662,13 @@
                     this.state.lastSync = new Date().toISOString();
                     return true;
 
+                    this.state.syncStatus.activeRequests--;  // KJS added
+
                 } catch (error) {
                     console.error(`❌ Error updating ${entityType} in Azure:`, error);
                     this.showSaveError(entityType, error);
                     return false;
+                    this.state.syncStatus.activeRequests--;  // KJS added 
                 }
             }
 
@@ -810,6 +850,22 @@
 
                 // Check connection every 30 seconds
                 setInterval(() => this.checkAzureConnection(), 30000);
+
+                // KJS added for network status
+                window.addEventListener('online', () => {
+                    console.log('📶 Network connection restored');
+                    this.state.syncStatus.isOnline = true;
+                    this.showNotification('Connection restored!', 'success');
+                    this.checkAzureConnection(); // Immediately check Azure
+                    this.render();
+                });
+                
+                window.addEventListener('offline', () => {
+                    console.log('📵 Network connection lost');
+                    this.state.syncStatus.isOnline = false;
+                    this.showNotification('No internet connection. Please check your network.', 'error');
+                    this.render();
+                });
 
                 // Bind Microsoft connect button
                 const btn = document.getElementById("connectMicrosoftBtn");
@@ -1336,7 +1392,27 @@
                     console.error('Error in fetchCompetitorIntelligence:', error);
                 }
             }
-
+            // Add proper error handling
+            async fetchMarketData() {
+                try {
+                    this.state.isLoading = true;
+                    const response = await fetch(endpoint);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    return data;
+                } catch (error) {
+                    console.error('Market data fetch failed:', error);
+                    this.showUserError('Failed to load market data. Please try again.');
+                    return null;
+                } finally {
+                    this.state.isLoading = false;
+                    this.render();
+                }
+            }
             async fetchMarketNews() {
                 try {
                     // Fetch steel industry news from APITube.io
@@ -3521,6 +3597,37 @@
                 `;
             }
 
+            // KJS added sync status
+            renderSyncStatus() {
+                const { syncStatus } = this.state;
+                
+                // Only show if there's something to report
+                if (!syncStatus.isOnline || syncStatus.isSyncing || syncStatus.lastError) {
+                    return `
+                        <div class="fixed bottom-4 right-4 z-50">
+                            <div class="bg-white rounded-lg shadow-lg p-3 max-w-sm">
+                                <div class="flex items-center space-x-2">
+                                    ${!syncStatus.isOnline ? `
+                                        <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                                        <span class="text-sm font-medium text-red-600">No Connection</span>
+                                    ` : syncStatus.isSyncing ? `
+                                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                        <span class="text-sm">Saving...</span>
+                                    ` : ''}
+                                </div>
+                                
+                                ${syncStatus.lastError ? `
+                                    <p class="text-xs text-red-600 mt-1">${syncStatus.lastError}</p>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                return '';
+            }
+
+            // Render Customers
             renderCustomers() {
                 const filteredCustomers = this.state.customers.filter(c => {
                     const matchesSearch = c.name.toLowerCase().includes(this.state.searchTerm.toLowerCase());
