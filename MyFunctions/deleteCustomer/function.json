@@ -5,8 +5,8 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["get", "options"],
-      "route": "opportunities"
+      "methods": ["delete", "options"],
+      "route": "customers/{id}"
     },
     {
       "type": "http",
@@ -14,5 +14,5 @@
       "name": "res"
     }
   ],
-  "scriptFile": "../getOpportunities/index.js"
+  "scriptFile": "../deleteCustomer/index.js"
 }

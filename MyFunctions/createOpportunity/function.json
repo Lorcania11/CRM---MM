@@ -5,7 +5,7 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["get", "options"],
+      "methods": ["post", "options"],
       "route": "opportunities"
     },
     {
@@ -14,5 +14,5 @@
       "name": "res"
     }
   ],
-  "scriptFile": "../getOpportunities/index.js"
+  "scriptFile": "../createOpportunity/index.js"
 }

@@ -5,13 +5,14 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["get", "post", "put", "options"],
-      "route": "opportunities/{id?}"
+      "methods": ["put", "options"],
+      "route": "activities/{id}"
     },
     {
       "type": "http",
       "direction": "out",
       "name": "res"
     }
-  ]
+  ],
+  "scriptFile": "../updateActivity/index.js"
 }

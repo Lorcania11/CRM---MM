@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["get", "options"],
-      "route": "opportunities"
+      "route": "customers"
     },
     {
       "type": "http",
@@ -14,5 +14,5 @@
       "name": "res"
     }
   ],
-  "scriptFile": "../getOpportunities/index.js"
+  "scriptFile": "../getCustomers/index.js"
 }

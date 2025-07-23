@@ -5,13 +5,14 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["get", "post", "put", "delete", "options"],
-      "route": "activities/{id?}"
+      "methods": ["get", "options"],
+      "route": "quotes"
     },
     {
       "type": "http",
       "direction": "out",
       "name": "res"
     }
-  ]
+  ],
+  "scriptFile": "../getQuotes/index.js"
 }
