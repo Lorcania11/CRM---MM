@@ -467,7 +467,8 @@
             // =====================================
             // AZURE BACKEND METHODS - ONLY BACKEND
             // =====================================
-
+            // =====================================
+            
             async loadFromAzure() {
                 if (!navigator.onLine) {
                     this.showNotification('No internet connection. Cannot load data.', 'error');
@@ -481,17 +482,25 @@
                     this.render();
 
                     // Load all data in parallel from Azure Functions
-                    const [customersResponse, opportunitiesResponse, activitiesResponse, quotesResponse] = await Promise.all([
-                        fetch(`${this.AZURE_API_BASE}/customers/get`, {
+                    const [customersResponse, opportunitiesResponse, activitiesResponse, quotesResponse, metricsResponse] = await Promise.all([
+                        fetch(`${this.AZURE_API_BASE}/customers`, {
+                            method: 'GET',
                             headers: { 'Accept': 'application/json' }
                         }),
-                        fetch(`${this.AZURE_API_BASE}/opportunities/get`, {
+                        fetch(`${this.AZURE_API_BASE}/opportunities`, {
+                            method: 'GET',
                             headers: { 'Accept': 'application/json' }
                         }),
-                        fetch(`${this.AZURE_API_BASE}/activities/get`, {
+                        fetch(`${this.AZURE_API_BASE}/activities`, {
+                            method: 'GET',
                             headers: { 'Accept': 'application/json' }
                         }),
-                        fetch(`${this.AZURE_API_BASE}/quotes/get`, {
+                        fetch(`${this.AZURE_API_BASE}/quotes`, {
+                            method: 'GET',
+                            headers: { 'Accept': 'application/json' }
+                        }),
+                        fetch(`${this.AZURE_API_BASE}/dashboard/metrics`, {
+                            method: 'GET',
                             headers: { 'Accept': 'application/json' }
                         })
                     ]);
@@ -506,12 +515,19 @@
                     const opportunities = await opportunitiesResponse.json();
                     const activities = await activitiesResponse.json();
                     const quotes = await quotesResponse.json();
+                    let metrics = null;
+                    
+                    // Handle metrics separately as it might fail
+                    if (metricsResponse.ok) {
+                        metrics = await metricsResponse.json();
+                    }
 
                     console.log('📊 Loaded from Azure SQL:', {
                         customers: customers.length,
                         opportunities: opportunities.length,
                         activities: activities.length,
-                        quotes: quotes.length
+                        quotes: quotes.length,
+                        metrics: metrics ? 'loaded' : 'failed'
                     });
 
                     // Update state
@@ -520,7 +536,7 @@
                     this.state.activities = activities || [];
                     this.state.quotes = quotes || [];
 
-                    // Connection successful - KJS added
+                    // Connection successful
                     this.state.azureHealthy = true;
                     this.state.backendStatus = 'connected';
                     this.state.connectionError = null;
@@ -554,14 +570,13 @@
             }
 
             async saveToAzure(entityType, data) {
-                // KJS added this check
                 if (!navigator.onLine) {
                     this.showNotification('No internet connection. Please try again when online.', 'error');
                     return false;
                 }
                 try {
                     console.log(`💾 Saving ${entityType} to Azure SQL...`);
-                    this.state.syncStatus.activeRequests++;  // KJS added to track active requests
+                    this.state.syncStatus.activeRequests++;
 
                     const response = await fetch(`${this.AZURE_API_BASE}/${entityType}`, {
                         method: 'POST',
@@ -579,27 +594,27 @@
 
                     const result = await response.json();
                     console.log(`✅ ${entityType} saved to Azure:`, result);
-                    // KJS added 
+                    
                     this.state.syncStatus.lastSync = new Date().toISOString();
                     this.state.syncStatus.activeRequests--;
                     return true;
 
                 } catch (error) {
                     console.error(`❌ Error saving ${entityType} to Azure:`, error);
+                    this.state.syncStatus.activeRequests--;
                     this.showSaveError(entityType, error);
                     return false;
                 }
             }
 
             async updateInAzure(entityType, id, data) {
-                // KJS added this check 
                 if (!navigator.onLine) {
                     this.showNotification('No internet connection. Please try again when online.', 'error');
                     return false;
                 }
                 try {
                     console.log(`🔄 Updating ${entityType} ${id} in Azure SQL...`);
-                    this.state.syncStatus.activeRequests++;  // KJS added
+                    this.state.syncStatus.activeRequests++;
 
                     const response = await fetch(`${this.AZURE_API_BASE}/${entityType}/${id}`, {
                         method: 'PUT',
@@ -609,13 +624,15 @@
                         },
                         body: JSON.stringify(data)
                     });
-                    // KJS ADDED THIS CONFLICT CHECK:
+                    
+                    // Handle conflict check
                     if (response.status === 409) {
                         this.showNotification(
                             'This record was updated by someone else. Please refresh and try again.',
                             'warning'
                         );
                         await this.loadFromAzure();  // Reload latest data
+                        this.state.syncStatus.activeRequests--;
                         return false;
                     }
 
@@ -627,22 +644,26 @@
                     const result = await response.json();
                     console.log(`✅ ${entityType} updated in Azure:`, result);
 
-                    this.state.lastSync = new Date().toISOString();
+                    this.state.syncStatus.lastSync = new Date().toISOString();
+                    this.state.syncStatus.activeRequests--;
                     return true;
-
-                    this.state.syncStatus.activeRequests--;  // KJS added
 
                 } catch (error) {
                     console.error(`❌ Error updating ${entityType} in Azure:`, error);
+                    this.state.syncStatus.activeRequests--;
                     this.showSaveError(entityType, error);
                     return false;
-                    this.state.syncStatus.activeRequests--;  // KJS added 
                 }
             }
 
             async deleteFromAzure(entityType, id) {
+                if (!navigator.onLine) {
+                    this.showNotification('No internet connection. Please try again when online.', 'error');
+                    return false;
+                }
                 try {
                     console.log(`🗑️ Deleting ${entityType} ${id} from Azure SQL...`);
+                    this.state.syncStatus.activeRequests++;
 
                     const response = await fetch(`${this.AZURE_API_BASE}/${entityType}/${id}`, {
                         method: 'DELETE',
@@ -657,11 +678,13 @@
                     }
 
                     console.log(`✅ ${entityType} deleted from Azure`);
-                    this.state.lastSync = new Date().toISOString();
+                    this.state.syncStatus.lastSync = new Date().toISOString();
+                    this.state.syncStatus.activeRequests--;
                     return true;
 
                 } catch (error) {
                     console.error(`❌ Error deleting ${entityType} from Azure:`, error);
+                    this.state.syncStatus.activeRequests--;
                     this.showSaveError(entityType, error);
                     return false;
                 }
@@ -671,6 +694,7 @@
                 try {
                     console.log('🏥 Checking Azure SQL Database health...');
                     const response = await fetch(`${this.AZURE_API_BASE}/health`, {
+                        method: 'GET',
                         headers: { 'Accept': 'application/json' }
                     });
 
@@ -709,6 +733,7 @@
                 try {
                     console.log('📊 Loading dashboard metrics from Azure...');
                     const response = await fetch(`${this.AZURE_API_BASE}/dashboard/metrics`, {
+                        method: 'GET',
                         headers: { 'Accept': 'application/json' }
                     });
 
@@ -737,6 +762,60 @@
                         : 0
                 };
             }
+
+            // Add connection check method
+            async checkAzureConnection() {
+                if (!navigator.onLine) {
+                    this.state.syncStatus.isOnline = false;
+                    this.state.backendStatus = 'offline';
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${this.AZURE_API_BASE}/health`, {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' },
+                        // Add timeout
+                        signal: AbortSignal.timeout(5000)
+                    });
+
+                    if (response.ok) {
+                        this.state.azureHealthy = true;
+                        this.state.backendStatus = 'connected';
+                        this.state.connectionError = null;
+                    } else {
+                        this.state.azureHealthy = false;
+                        this.state.backendStatus = 'error';
+                        this.state.connectionError = `Health check returned ${response.status}`;
+                    }
+                } catch (error) {
+                    this.state.azureHealthy = false;
+                    this.state.backendStatus = 'error';
+                    this.state.connectionError = error.message;
+                }
+            }
+
+            // Add notification helper
+            showNotification(message, type = 'info') {
+                // You can implement a toast notification here
+                console.log(`[${type.toUpperCase()}] ${message}`);
+                
+                // Simple implementation
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                    type === 'error' ? 'bg-red-500 text-white' : 
+                    type === 'warning' ? 'bg-yellow-500 text-white' : 
+                    type === 'success' ? 'bg-green-500 text-white' : 
+                    'bg-blue-500 text-white'
+                }`;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 5000);
+            }
+            
 
             // =====================================
             // ERROR HANDLING METHODS
