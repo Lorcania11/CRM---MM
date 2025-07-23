@@ -1,0 +1,17 @@
+{
+  "name": "majormetals-crm-functions",
+  "version": "1.0.0",
+  "description": "Azure Functions backend for Major Metals CRM",
+  "main": "index.js",
+  "scripts": {
+    "start": "func start",
+    "test": "echo \"No tests configured\"",
+    "deploy": "func azure functionapp publish func-majormetals-crm"
+  },
+  "dependencies": {
+    "mssql": "^10.0.1"
+  },
+  "devDependencies": {
+    "azure-functions-core-tools": "^4.x"
+  }
+}
