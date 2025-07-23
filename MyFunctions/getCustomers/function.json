@@ -13,7 +13,5 @@
       "direction": "out",
       "name": "res"
     }
-  ],
-  "scriptFile": "../azure_functions_api.js",
-  "entryPoint": "getCustomers"
+  ]
 }
