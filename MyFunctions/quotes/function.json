@@ -5,8 +5,8 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["post", "options"],
-      "route": "activities"
+      "methods": ["get", "post", "options"],
+      "route": "quotes"
     },
     {
       "type": "http",

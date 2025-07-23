@@ -5,8 +5,8 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["delete", "options"],
-      "route": "activities/{id}"
+      "methods": ["get", "post", "put", "options"],
+      "route": "opportunities/{id?}"
     },
     {
       "type": "http",
