@@ -20,6 +20,7 @@
             https://login.microsoftonline.com
             https://graph.microsoft.com
             https://func-majormetals-crm.azurewebsites.net
+            https://func-majormetals-crm.azurewebsites.net/api
             https://func-majormetals-crm-apim2.azure-api.net;
         frame-src 
             https://outlook.office365.com/
@@ -340,6 +341,7 @@
             constructor() {
                 // Azure Functions configuration - ONLY BACKEND
                 this.AZURE_API_BASE = 'https://func-majormetals-crm-apim2.azure-api.net/crm-v2';
+                this.AZURE_API_BASE = 'https://func-majormetals-crm.azurewebsites.net/api';
                 this.tokenClient = null;
                 this.accessToken = null;
                 this.msalInstance = null;
