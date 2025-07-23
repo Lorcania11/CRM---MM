@@ -339,7 +339,7 @@
         class MajorMetalsCRM {
             constructor() {
                 // Azure Functions configuration - ONLY BACKEND
-                this.AZURE_API_BASE = 'https://func-majormetals-crm.azurewebsites.net/api';
+                this.AZURE_API_BASE = 'https://func-majormetals-crm-apim2.azure-api.net/crm-v2';
                 this.tokenClient = null;
                 this.accessToken = null;
                 this.msalInstance = null;
@@ -468,226 +468,45 @@
             // AZURE BACKEND METHODS - ONLY BACKEND
             // =====================================
             // =====================================
-            
+            // Then update your methods:
             async loadFromAzure() {
-                if (!navigator.onLine) {
-                    this.showNotification('No internet connection. Cannot load data.', 'error');
-                    return;
-                }
-                try {
-                    console.log('🔄 Loading all data from Azure SQL Database...');
-                    this.state.syncStatus.isSyncing = true;
-                    this.state.syncStatus.activeRequests++;
-                    this.state.backendStatus = 'connecting';
-                    this.render();
-
-                    // Load all data in parallel from Azure Functions
-                    const [customersResponse, opportunitiesResponse, activitiesResponse, quotesResponse, metricsResponse] = await Promise.all([
-                        fetch(`${this.AZURE_API_BASE}/customers`, {
-                            method: 'GET',
-                            headers: { 'Accept': 'application/json' }
-                        }),
-                        fetch(`${this.AZURE_API_BASE}/opportunities`, {
-                            method: 'GET',
-                            headers: { 'Accept': 'application/json' }
-                        }),
-                        fetch(`${this.AZURE_API_BASE}/activities`, {
-                            method: 'GET',
-                            headers: { 'Accept': 'application/json' }
-                        }),
-                        fetch(`${this.AZURE_API_BASE}/quotes`, {
-                            method: 'GET',
-                            headers: { 'Accept': 'application/json' }
-                        }),
-                        fetch(`${this.AZURE_API_BASE}/dashboard/metrics`, {
-                            method: 'GET',
-                            headers: { 'Accept': 'application/json' }
-                        })
-                    ]);
-
-                    // Check if all requests were successful
-                    if (!customersResponse.ok || !opportunitiesResponse.ok || !activitiesResponse.ok || !quotesResponse.ok) {
-                        throw new Error(`Azure API error: ${customersResponse.status} ${opportunitiesResponse.status} ${activitiesResponse.status} ${quotesResponse.status}`);
-                    }
-
-                    // Parse responses
-                    const customers = await customersResponse.json();
-                    const opportunities = await opportunitiesResponse.json();
-                    const activities = await activitiesResponse.json();
-                    const quotes = await quotesResponse.json();
-                    let metrics = null;
-                    
-                    // Handle metrics separately as it might fail
-                    if (metricsResponse.ok) {
-                        metrics = await metricsResponse.json();
-                    }
-
-                    console.log('📊 Loaded from Azure SQL:', {
-                        customers: customers.length,
-                        opportunities: opportunities.length,
-                        activities: activities.length,
-                        quotes: quotes.length,
-                        metrics: metrics ? 'loaded' : 'failed'
-                    });
-
-                    // Update state
-                    this.state.customers = customers || [];
-                    this.state.opportunities = opportunities || [];
-                    this.state.activities = activities || [];
-                    this.state.quotes = quotes || [];
-
-                    // Connection successful
-                    this.state.azureHealthy = true;
-                    this.state.backendStatus = 'connected';
-                    this.state.connectionError = null;
-                    this.state.syncStatus.lastSync = new Date().toISOString();
-                    this.state.syncStatus.isSyncing = false;
-                    this.state.syncStatus.activeRequests--;
-
-                    console.log('✅ Azure loading completed successfully');
-                    this.render();
-
-                } catch (error) {
-                    console.error('❌ Error loading from Azure:', error);
-                    this.state.syncStatus.isSyncing = false;
-                    this.state.syncStatus.activeRequests--;
-                    this.state.azureHealthy = false;
-                    this.state.backendStatus = 'error';
-                    this.state.connectionError = error.message;
-                    this.state.syncStatus.lastError = error.message;
-
-                    // Initialize with empty data since we're Azure-only
-                    this.state.customers = [];
-                    this.state.opportunities = [];
-                    this.state.activities = [];
-                    this.state.quotes = [];
-
-                    this.render();
-
-                    // Show connection error
-                    this.showConnectionError(error);
-                }
+                // Update to use API Management endpoints
+                const [customersResponse, opportunitiesResponse, activitiesResponse, quotesResponse] = await Promise.all([
+                    fetch(`${this.AZURE_API_BASE}/getCustomers`, {  // Note: using getCustomers
+                        method: 'GET',
+                        headers: { 
+                            'Accept': 'application/json',
+                            'Ocp-Apim-Subscription-Key': 'YOUR_SUBSCRIPTION_KEY'  // Add if required
+                        }
+                    }),
+                    // Similar updates for other endpoints
+                ]);
             }
 
             async saveToAzure(entityType, data) {
-                if (!navigator.onLine) {
-                    this.showNotification('No internet connection. Please try again when online.', 'error');
-                    return false;
-                }
-                try {
-                    console.log(`💾 Saving ${entityType} to Azure SQL...`);
-                    this.state.syncStatus.activeRequests++;
-
-                    const response = await fetch(`${this.AZURE_API_BASE}/${entityType}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify(data)
-                    });
-
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error(`Save failed: ${response.status} - ${errorText}`);
-                    }
-
-                    const result = await response.json();
-                    console.log(`✅ ${entityType} saved to Azure:`, result);
-                    
-                    this.state.syncStatus.lastSync = new Date().toISOString();
-                    this.state.syncStatus.activeRequests--;
-                    return true;
-
-                } catch (error) {
-                    console.error(`❌ Error saving ${entityType} to Azure:`, error);
-                    this.state.syncStatus.activeRequests--;
-                    this.showSaveError(entityType, error);
-                    return false;
-                }
-            }
-
-            async updateInAzure(entityType, id, data) {
-                if (!navigator.onLine) {
-                    this.showNotification('No internet connection. Please try again when online.', 'error');
-                    return false;
-                }
-                try {
-                    console.log(`🔄 Updating ${entityType} ${id} in Azure SQL...`);
-                    this.state.syncStatus.activeRequests++;
-
-                    const response = await fetch(`${this.AZURE_API_BASE}/${entityType}/${id}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify(data)
-                    });
-                    
-                    // Handle conflict check
-                    if (response.status === 409) {
-                        this.showNotification(
-                            'This record was updated by someone else. Please refresh and try again.',
-                            'warning'
-                        );
-                        await this.loadFromAzure();  // Reload latest data
-                        this.state.syncStatus.activeRequests--;
-                        return false;
-                    }
-
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error(`Update failed: ${response.status} - ${errorText}`);
-                    }
-
-                    const result = await response.json();
-                    console.log(`✅ ${entityType} updated in Azure:`, result);
-
-                    this.state.syncStatus.lastSync = new Date().toISOString();
-                    this.state.syncStatus.activeRequests--;
-                    return true;
-
-                } catch (error) {
-                    console.error(`❌ Error updating ${entityType} in Azure:`, error);
-                    this.state.syncStatus.activeRequests--;
-                    this.showSaveError(entityType, error);
-                    return false;
-                }
+                const response = await fetch(`${this.AZURE_API_BASE}/create${this.capitalizeFirst(entityType)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
             }
 
             async deleteFromAzure(entityType, id) {
-                if (!navigator.onLine) {
-                    this.showNotification('No internet connection. Please try again when online.', 'error');
-                    return false;
-                }
-                try {
-                    console.log(`🗑️ Deleting ${entityType} ${id} from Azure SQL...`);
-                    this.state.syncStatus.activeRequests++;
+                const response = await fetch(`${this.AZURE_API_BASE}/delete${this.capitalizeFirst(entityType)}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ id: id })  // May need to pass ID in body
+                });
+            }
 
-                    const response = await fetch(`${this.AZURE_API_BASE}/${entityType}/${id}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Accept': 'application/json'
-                        }
-                    });
-
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error(`Delete failed: ${response.status} - ${errorText}`);
-                    }
-
-                    console.log(`✅ ${entityType} deleted from Azure`);
-                    this.state.syncStatus.lastSync = new Date().toISOString();
-                    this.state.syncStatus.activeRequests--;
-                    return true;
-
-                } catch (error) {
-                    console.error(`❌ Error deleting ${entityType} from Azure:`, error);
-                    this.state.syncStatus.activeRequests--;
-                    this.showSaveError(entityType, error);
-                    return false;
-                }
+            // Helper function
+            capitalizeFirst(str) {
+                return str.charAt(0).toUpperCase() + str.slice(1);
             }
 
             async checkAzureHealth() {
