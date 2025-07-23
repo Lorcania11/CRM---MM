@@ -5436,9 +5436,313 @@
                 `;
             }
         }
-        // Initialize the app
+        // Initialize the app / KJS added - missing methods if they werent defined
         const app = new MajorMetalsCRM();
         window.app = app;
+
+        // Add missing methods if they weren't defined
+        if (!app.setView) {
+            app.setView = function(view) {
+                this.state.activeView = view;
+                this.state.globalSearchResults = null;
+                this.render();
+            };
+        }
+
+        // Add other missing methods
+        app.toggleMobileMenu = function() {
+            this.state.mobileMenuOpen = !this.state.mobileMenuOpen;
+            this.render();
+        };
+
+        app.updateSearchTerm = function(term) {
+            this.state.searchTerm = term;
+            this.render();
+        };
+
+        app.updateIndustryFilter = function(filter) {
+            this.state.industryFilter = filter;
+            this.render();
+        };
+
+        app.updatePipelineFilter = function(filter) {
+            this.state.pipelineFilter = filter;
+            this.render();
+        };
+
+        app.updateStatusFilter = function(filter) {
+            this.state.statusFilter = filter;
+            this.render();
+        };
+
+        app.updateActivityFilter = function(filter) {
+            this.state.activityFilter = filter;
+            this.render();
+        };
+
+        app.openModal = function(type) {
+            this.state.showModal = type;
+            this.state.formData = {};
+            if (type === 'customer') {
+                this.state.formData.contacts = [{ name: '', email: '', cell: '', title: '' }];
+            }
+            this.render();
+        };
+
+        app.closeModal = function() {
+            this.state.showModal = null;
+            this.state.formData = {};
+            this.state.editingCustomer = null;
+            this.state.editingActivity = null;
+            this.state.viewingActivity = null;
+            this.render();
+        };
+
+        app.handleModalSubmit = function() {
+            switch (this.state.showModal) {
+                case 'customer':
+                    if (this.state.editingCustomer) {
+                        this.handleUpdateCustomer();
+                    } else {
+                        this.handleAddCustomer();
+                    }
+                    break;
+                case 'opportunity':
+                    this.handleAddOpportunity();
+                    break;
+                case 'quote':
+                    this.handleAddQuote();
+                    break;
+                case 'activity':
+                    this.handleAddActivity();
+                    break;
+            }
+        };
+
+        app.updateFormField = function(field, value) {
+            this.state.formData[field] = value;
+            this.render();
+        };
+
+        app.toggleShowCompletedDashboard = function() {
+            this.state.showCompletedActivities = !this.state.showCompletedActivities;
+            this.render();
+        };
+
+        app.viewCustomerDetails = function(customerId) {
+            this.state.viewingCustomerId = customerId;
+            this.state.showModal = 'customer-details';
+            this.state.customerDetailTab = 'opportunities';
+            this.render();
+        };
+
+        app.editCustomer = function(customerId) {
+            const customer = this.state.customers.find(c => c.id === customerId);
+            if (customer) {
+                this.state.editingCustomer = customer;
+                this.state.formData = { ...customer };
+                this.state.showModal = 'customer';
+                this.render();
+            }
+        };
+
+        app.scheduleActivityForCustomer = function(customerId) {
+            this.state.formData = { customerId };
+            this.state.showModal = 'activity';
+            this.render();
+        };
+
+        app.toggleBulkMode = function() {
+            this.state.bulkMode = !this.state.bulkMode;
+            this.state.selectedItems.clear();
+            this.render();
+        };
+
+        app.toggleSelectItem = function(itemId) {
+            if (this.state.selectedItems.has(itemId)) {
+                this.state.selectedItems.delete(itemId);
+            } else {
+                this.state.selectedItems.add(itemId);
+            }
+            this.render();
+        };
+
+        app.executeBulkAction = function() {
+            const action = document.getElementById('bulk-action-select')?.value;
+            if (!action) {
+                alert('Please select an action');
+                return;
+            }
+            
+            switch (action) {
+                case 'update-stage':
+                    this.state.showModal = 'bulk-stage';
+                    break;
+                case 'delete':
+                    this.bulkDelete();
+                    break;
+                default:
+                    alert('Action not implemented');
+            }
+        };
+
+        app.toggleProductSelection = function(product) {
+            if (!this.state.formData.primaryProducts) {
+                this.state.formData.primaryProducts = [];
+            }
+            const index = this.state.formData.primaryProducts.indexOf(product);
+            if (index > -1) {
+                this.state.formData.primaryProducts.splice(index, 1);
+            } else {
+                this.state.formData.primaryProducts.push(product);
+            }
+            this.render();
+        };
+
+        app.updateCharCount = function(field, value, maxLength) {
+            const counter = document.getElementById(`${field}-counter`);
+            if (counter) {
+                counter.textContent = `${value.length}/${maxLength}`;
+            }
+        };
+
+        app.addContact = function() {
+            if (!this.state.formData.contacts) {
+                this.state.formData.contacts = [];
+            }
+            this.state.formData.contacts.push({ name: '', email: '', cell: '', title: '' });
+            this.render();
+        };
+
+        app.removeContact = function(index) {
+            if (this.state.formData.contacts && index > 0) {
+                this.state.formData.contacts.splice(index, 1);
+                this.render();
+            }
+        };
+
+        app.updateContactField = function(index, field, value) {
+            if (this.state.formData.contacts && this.state.formData.contacts[index]) {
+                this.state.formData.contacts[index][field] = value;
+            }
+        };
+
+        app.handleFileUpload = async function(event) {
+            // Implement file upload logic
+            console.log('File upload not yet implemented');
+        };
+
+        app.deleteAttachment = function(customerId, attachmentId) {
+            // Implement attachment deletion
+            console.log('Attachment deletion not yet implemented');
+        };
+
+        app.showOpportunityDetails = function(oppId) {
+            this.state.selectedOpp = this.state.opportunities.find(o => o.id === oppId);
+            this.render();
+        };
+
+        app.closeOpportunityDetails = function() {
+            this.state.selectedOpp = null;
+            this.render();
+        };
+
+        app.handleDragStart = function(event, oppId) {
+            event.dataTransfer.setData('text/plain', oppId);
+        };
+
+        app.handleDrop = function(event, newStage) {
+            event.preventDefault();
+            const oppId = event.dataTransfer.getData('text/plain');
+            const opp = this.state.opportunities.find(o => o.id === oppId);
+            if (opp) {
+                opp.stage = newStage;
+                this.updateInAzure('opportunities', oppId, opp);
+                this.render();
+            }
+        };
+
+        app.createActivityForOpportunity = function(oppId) {
+            const opp = this.state.opportunities.find(o => o.id === oppId);
+            if (opp) {
+                this.state.formData = { 
+                    customerId: opp.customerId,
+                    opportunityId: oppId 
+                };
+                this.state.showModal = 'activity';
+                this.render();
+            }
+        };
+
+        app.toggleShowCompletedModal = function() {
+            this.state.showCompletedActivities = !this.state.showCompletedActivities;
+            this.render();
+        };
+
+        app.toggleShowCompletedPipeline = function() {
+            this.state.showCompletedActivities = !this.state.showCompletedActivities;
+            this.render();
+        };
+
+        app.editActivity = function(activityId) {
+            const activity = this.state.activities.find(a => a.id === activityId);
+            if (activity) {
+                this.state.editingActivity = activity;
+                this.state.formData = { ...activity };
+                this.state.showModal = 'activity';
+                this.render();
+            }
+        };
+
+        app.viewActivity = function(activityId) {
+            const activity = this.state.activities.find(a => a.id === activityId);
+            if (activity) {
+                this.state.viewingActivity = activity;
+                this.state.showModal = 'view-activity';
+                this.render();
+            }
+        };
+
+        app.toggleShowCompletedActivities = function() {
+            this.state.showCompletedActivities = !this.state.showCompletedActivities;
+            this.render();
+        };
+
+        app.closeFollowUp = function() {
+            this.state.showFollowUp = null;
+            this.render();
+        };
+
+        app.createFollowUpFromModal = async function() {
+            const followUpData = {
+                type: document.getElementById('followup-type')?.value || 'call',
+                subject: document.getElementById('followup-subject')?.value || '',
+                date: document.getElementById('followup-date')?.value || '',
+                time: document.getElementById('followup-time')?.value || '2:00 PM',
+                notes: document.getElementById('followup-notes')?.value || '',
+                pipelineStage: document.getElementById('followup-stage')?.value || ''
+            };
+            
+            if (this.state.showFollowUp) {
+                await this.createFollowUp(this.state.showFollowUp, followUpData);
+            }
+        };
+
+        app.selectSuggestedAction = function(subject, stage) {
+            document.getElementById('followup-subject').value = subject;
+            document.getElementById('followup-stage').value = stage;
+        };
+
+        // Audio recording methods
+        app.startRecording = async function() {
+            // Implement audio recording
+            console.log('Audio recording not yet implemented');
+        };
+
+        app.stopRecording = function() {
+            // Implement stop recording
+            console.log('Stop recording not yet implemented');
+        };
     </script>
 </body>
 
