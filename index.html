@@ -258,7 +258,6 @@
                 storeAuthStateInCookie: false
             }
         };
-        const msalInstance = new msal.PublicClientApplication(msalConfig);
         // Market Intelligence API Configuration
         const MARKET_INTELLIGENCE_CONFIG = {
             // Primary steel pricing API - Using free tier Commoditic API
@@ -340,7 +339,6 @@
         class MajorMetalsCRM {
             constructor() {
                 // Azure Functions configuration - ONLY BACKEND
-                this.AZURE_API_BASE = 'https://func-majormetals-crm-apim2.azure-api.net/crm-v2';
                 this.AZURE_API_BASE = 'https://func-majormetals-crm.azurewebsites.net/api';
                 this.tokenClient = null;
                 this.accessToken = null;
@@ -410,8 +408,6 @@
                     },
                     showExcelModal: false,
                     excelEditingCell: null,
-
-                    // Market Intelligence State
                     marketIntelligence: {
                         steelPrices: {
                             current: null,
@@ -435,10 +431,8 @@
                         isLoading: false
                     },
                     showMarketIntelligence: false,
-
-                    // Azure-only configuration
                     azureHealthy: false,
-                    backendStatus: 'connecting', // 'connected', 'offline', 'error'
+                    backendStatus: 'connecting',
                     connectionError: null
                 };
 
@@ -463,52 +457,177 @@
                 ];
 
                 console.log("🚀 Initializing Azure-Only CRM");
-                this.init();
+
+                // Start initialization but don't block
+                this.init().catch(error => {
+                    console.error("Initialization error:", error);
+                    // Still render the page even if init fails
+                    this.render();
+                });
             }
 
             // =====================================
-            // AZURE BACKEND METHODS - ONLY BACKEND
+            // AZURE BACKEND METHODS - FIXED
             // =====================================
-            // =====================================
-            // Then update your methods:
             async loadFromAzure() {
-                // Update to use API Management endpoints
-                const [customersResponse, opportunitiesResponse, activitiesResponse, quotesResponse] = await Promise.all([
-                    fetch(`${this.AZURE_API_BASE}/getCustomers`, {  // Note: using getCustomers
-                        method: 'GET',
-                        headers: { 
-                            'Accept': 'application/json',
-                            'Ocp-Apim-Subscription-Key': 'YOUR_SUBSCRIPTION_KEY'  // Add if required
+                if (!navigator.onLine) {
+                    console.log('Offline - skipping Azure load');
+                    return;
+                }
+
+                try {
+                    console.log('🔄 Loading all data from Azure SQL Database...');
+                    this.state.syncStatus.isSyncing = true;
+                    this.state.backendStatus = 'connecting';
+
+                    // Set a timeout for all requests
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+                    try {
+                        const [customersResponse, opportunitiesResponse, activitiesResponse, quotesResponse] = await Promise.all([
+                            fetch(`${this.AZURE_API_BASE}/customers`, {
+                                method: 'GET',
+                                headers: { 'Accept': 'application/json' },
+                                signal: controller.signal
+                            }).catch(() => ({ ok: false, status: 0 })),
+                            
+                            fetch(`${this.AZURE_API_BASE}/opportunities`, {
+                                method: 'GET',
+                                headers: { 'Accept': 'application/json' },
+                                signal: controller.signal
+                            }).catch(() => ({ ok: false, status: 0 })),
+                            
+                            fetch(`${this.AZURE_API_BASE}/activities`, {
+                                method: 'GET',
+                                headers: { 'Accept': 'application/json' },
+                                signal: controller.signal
+                            }).catch(() => ({ ok: false, status: 0 })),
+                            
+                            fetch(`${this.AZURE_API_BASE}/quotes`, {
+                                method: 'GET',
+                                headers: { 'Accept': 'application/json' },
+                                signal: controller.signal
+                            }).catch(() => ({ ok: false, status: 0 }))
+                        ]);
+
+                        clearTimeout(timeoutId);
+
+                        // Process responses - use empty arrays if failed
+                        this.state.customers = customersResponse.ok ? await customersResponse.json() : [];
+                        this.state.opportunities = opportunitiesResponse.ok ? await opportunitiesResponse.json() : [];
+                        this.state.activities = activitiesResponse.ok ? await activitiesResponse.json() : [];
+                        this.state.quotes = quotesResponse.ok ? await quotesResponse.json() : [];
+
+                        if (customersResponse.ok || opportunitiesResponse.ok || activitiesResponse.ok || quotesResponse.ok) {
+                            this.state.azureHealthy = true;
+                            this.state.backendStatus = 'connected';
+                            console.log('✅ Azure loading completed successfully');
+                        } else {
+                            throw new Error('All API calls failed');
                         }
-                    }),
-                    // Similar updates for other endpoints
-                ]);
+
+                    } catch (fetchError) {
+                        if (fetchError.name === 'AbortError') {
+                            throw new Error('Request timeout - server not responding');
+                        }
+                        throw fetchError;
+                    }
+
+                } catch (error) {
+                    console.error('❌ Error loading from Azure:', error);
+                    this.state.azureHealthy = false;
+                    this.state.backendStatus = 'error';
+                    this.state.connectionError = error.message;
+                    
+                    // Don't show modal - just notification
+                    this.showNotification('Unable to connect to server', 'error');
+                    
+                } finally {
+                    this.state.syncStatus.isSyncing = false;
+                    this.state.syncStatus.lastSync = new Date().toISOString();
+                    // Always render at the end
+                    this.render();
+                }
             }
 
+            // FIXED: Complete saveToAzure method
             async saveToAzure(entityType, data) {
-                const response = await fetch(`${this.AZURE_API_BASE}/create${this.capitalizeFirst(entityType)}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
+                try {
+                    // Use correct endpoint structure - Azure Functions expect POST to /customers, not /createCustomers
+                    const response = await fetch(`${this.AZURE_API_BASE}/${entityType}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Save failed: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    console.log(`✅ Saved ${entityType} to Azure:`, result);
+                    this.state.syncStatus.lastSync = new Date().toISOString();
+                    return true;
+                } catch (error) {
+                    console.error(`❌ Failed to save ${entityType}:`, error);
+                    this.showSaveError(entityType, error);
+                    return false;
+                }
             }
 
+            // FIXED: Complete updateInAzure method (was missing)
+            async updateInAzure(entityType, id, data) {
+                try {
+                    const response = await fetch(`${this.AZURE_API_BASE}/${entityType}/${id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Update failed: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    console.log(`✅ Updated ${entityType} in Azure:`, result);
+                    this.state.syncStatus.lastSync = new Date().toISOString();
+                    return true;
+                } catch (error) {
+                    console.error(`❌ Failed to update ${entityType}:`, error);
+                    this.showSaveError(entityType, error);
+                    return false;
+                }
+            }
+
+            // FIXED: Complete deleteFromAzure method
             async deleteFromAzure(entityType, id) {
-                const response = await fetch(`${this.AZURE_API_BASE}/delete${this.capitalizeFirst(entityType)}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ id: id })  // May need to pass ID in body
-                });
-            }
+                try {
+                    const response = await fetch(`${this.AZURE_API_BASE}/${entityType}/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
 
-            // Helper function
-            capitalizeFirst(str) {
-                return str.charAt(0).toUpperCase() + str.slice(1);
+                    if (!response.ok) {
+                        throw new Error(`Delete failed: ${response.status}`);
+                    }
+
+                    console.log(`✅ Deleted ${entityType} from Azure`);
+                    this.state.syncStatus.lastSync = new Date().toISOString();
+                    return true;
+                } catch (error) {
+                    console.error(`❌ Failed to delete ${entityType}:`, error);
+                    alert(`Failed to delete. Please try again.\n${error.message}`);
+                    return false;
+                }
             }
 
             async checkAzureHealth() {
@@ -584,7 +703,6 @@
                 };
             }
 
-            // Add connection check method
             async checkAzureConnection() {
                 if (!navigator.onLine) {
                     this.state.syncStatus.isOnline = false;
@@ -593,12 +711,16 @@
                 }
 
                 try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+                    
                     const response = await fetch(`${this.AZURE_API_BASE}/health`, {
                         method: 'GET',
                         headers: { 'Accept': 'application/json' },
-                        // Add timeout
-                        signal: AbortSignal.timeout(5000)
+                        signal: controller.signal
                     });
+
+                    clearTimeout(timeoutId);
 
                     if (response.ok) {
                         this.state.azureHealthy = true;
@@ -616,12 +738,72 @@
                 }
             }
 
-            // Add notification helper
+            setupEventListeners() {
+                // Global keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && this.state.showModal) {
+                        this.closeModal();
+                    }
+                });
+                
+                // Handle browser back button
+                window.addEventListener('popstate', () => {
+                    this.render();
+                });
+            }
+
+            // FIXED: Complete render method
+            render() {
+                try {
+                    const app = document.getElementById('app');
+                    if (!app) {
+                        console.error('App container not found!');
+                        return;
+                    }
+
+                    app.innerHTML = `
+                        <div class="flex min-h-screen bg-gray-100">
+                            ${this.renderNavigation()}
+                            
+                            <div class="flex-1 overflow-y-auto lg:ml-64">
+                                <div class="lg:hidden h-20"></div>
+                                ${this.renderActiveView()}
+                            </div>
+                            
+                            ${this.renderModals()}
+                        </div>
+                    `;
+                    
+                    // Re-bind the Microsoft button if it exists
+                    const btn = document.getElementById("connectMicrosoftBtn");
+                    if (btn) {
+                        btn.addEventListener("click", this.connectToMicrosoft.bind(this));
+                    }
+                } catch (error) {
+                    console.error('Render error:', error);
+                    // Show error page
+                    const app = document.getElementById('app');
+                    if (app) {
+                        app.innerHTML = `
+                            <div class="flex items-center justify-center min-h-screen bg-gray-100">
+                                <div class="text-center">
+                                    <h1 class="text-2xl font-bold text-red-600 mb-4">Error Loading CRM</h1>
+                                    <p class="text-gray-600 mb-4">${error.message}</p>
+                                    <button onclick="location.reload()" 
+                                            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                        Reload Page
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+            }
+
+            // FIXED: Complete showNotification method (was broken)
             showNotification(message, type = 'info') {
-                // You can implement a toast notification here
                 console.log(`[${type.toUpperCase()}] ${message}`);
                 
-                // Simple implementation
                 const notification = document.createElement('div');
                 notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
                     type === 'error' ? 'bg-red-500 text-white' : 
@@ -636,12 +818,10 @@
                     notification.remove();
                 }, 5000);
             }
-            
 
             // =====================================
             // ERROR HANDLING METHODS
             // =====================================
-
             showConnectionError(error) {
                 const errorModal = `
                     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -674,7 +854,6 @@
                     </div>
                 `;
 
-                // Add error modal to DOM
                 const existingModal = document.getElementById('connection-error-modal');
                 if (existingModal) existingModal.remove();
 
@@ -689,61 +868,68 @@
             }
 
             retryConnection() {
-                // Remove error modal
                 const errorModal = document.getElementById('connection-error-modal');
                 if (errorModal) errorModal.remove();
-
-                // Retry loading data
                 this.loadFromAzure();
             }
-            // =====================================
-            // INITIALIZATION - AZURE ONLY
-            // =====================================
 
+            // =====================================
+            // INITIALIZATION - FIXED
+            // =====================================
             async init() {
                 console.log("🚨 INIT STARTED - Azure SQL Database Only");
 
-                // Load from Azure (only backend)
-                await this.loadFromAzure();
-
-                // Initialize other components
-                this.setupEventListeners();
-                await this.initMicrosoftAuth();
-                this.render();
-
-                // Check Azure connection on startup
-                await this.checkAzureConnection();
-
-                // Check connection every 30 seconds
-                setInterval(() => this.checkAzureConnection(), 30000);
-
-                // KJS added for network status
-                window.addEventListener('online', () => {
-                    console.log('📶 Network connection restored');
-                    this.state.syncStatus.isOnline = true;
-                    this.showNotification('Connection restored!', 'success');
-                    this.checkAzureConnection(); // Immediately check Azure
+                try {
+                    // Setup UI first - this should never fail
+                    this.setupEventListeners();
+                    
+                    // Render immediately with empty data
                     this.render();
-                });
+                    
+                    // Then try to load data in the background
+                    this.loadFromAzure().catch(err => {
+                        console.error('Failed to load from Azure:', err);
+                        this.showNotification('Unable to connect to server. Working offline.', 'warning');
+                    });
 
-                window.addEventListener('offline', () => {
-                    console.log('📵 Network connection lost');
-                    this.state.syncStatus.isOnline = false;
-                    this.showNotification('No internet connection. Please check your network.', 'error');
+                    // Initialize other components that don't block
+                    this.initMicrosoftAuth().catch(err => {
+                        console.error('Microsoft auth init failed:', err);
+                    });
+
+                    // Setup periodic connection checks
+                    setInterval(() => {
+                        if (navigator.onLine) {
+                            this.checkAzureConnection();
+                        }
+                    }, 30000);
+
+                    // Setup network event listeners
+                    window.addEventListener('online', () => {
+                        console.log('📶 Network connection restored');
+                        this.state.syncStatus.isOnline = true;
+                        this.showNotification('Connection restored!', 'success');
+                        this.checkAzureConnection();
+                        this.render();
+                    });
+
+                    window.addEventListener('offline', () => {
+                        console.log('📵 Network connection lost');
+                        this.state.syncStatus.isOnline = false;
+                        this.showNotification('No internet connection.', 'error');
+                        this.render();
+                    });
+
+                } catch (error) {
+                    console.error("Critical init error:", error);
+                    // Still render something
                     this.render();
-                });
-
-                // Bind Microsoft connect button
-                const btn = document.getElementById("connectMicrosoftBtn");
-                if (btn) {
-                    btn.addEventListener("click", this.connectToMicrosoft.bind(this));
                 }
             }
 
             // =====================================
-            // CRUD OPERATIONS - AZURE ONLY
+            // CRUD OPERATIONS - FIXED
             // =====================================
-
             async handleAddCustomer() {
                 const newCustomer = {
                     id: Date.now().toString(),
@@ -762,7 +948,6 @@
                         cell: this.state.formData.phone || '',
                         title: ''
                     }],
-                    // Legacy fields for backward compatibility
                     contact: this.state.formData.contacts?.[0]?.name || this.state.formData.contact || '',
                     email: this.state.formData.contacts?.[0]?.email || this.state.formData.email || '',
                     phone: this.state.formData.contacts?.[0]?.cell || this.state.formData.phone || '',
@@ -970,7 +1155,6 @@
                 }
             }
 
-            // Bulk operations for Azure
             async bulkUpdateStage(stage) {
                 const selectedIds = Array.from(this.state.selectedItems);
                 let successCount = 0;
@@ -1021,7 +1205,7 @@
                     alert('❌ Failed to delete customers. Please try again.');
                 }
             }
-
+        
             setupMarketIntelligenceRefresh() {
                 // Initial load with error handling
                 Promise.all([
@@ -1129,7 +1313,7 @@
                     this.state.marketIntelligence.isLoading = false;
                     this.render();
                 }
-            }
+            };
 
             async fetchEconomicIndicators() {
                 try {
