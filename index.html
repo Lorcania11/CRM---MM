@@ -8,27 +8,26 @@
 
     <!-- Updated Content Security Policy with WebSocket support and additional Google domains -->
     <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self';
-        script-src 'self' 'unsafe-inline' 'unsafe-eval'
-            https://cdn.tailwindcss.com
-            https://alcdn.msauth.net/;
-        connect-src 'self'
-            https://api.commoditic.com/
-            https://commodities-api.com/
-            https://api.apitube.io/
-            https://api.stlouisfed.org/
-            https://login.microsoftonline.com/
-            https://graph.microsoft.com/
-            https://func-majormetals-crm.azurewebsites.net/
-            https://func-majormetals-crm.azurewebsites.net/api/
-            https://func-majormetals-crm-apim2.azure-api.net/
-        frame-src 
-            https://outlook.office365.com/
-            https://outlook.office.com/;
-        style-src 'self' 'unsafe-inline' 
-            https://cdn.tailwindcss.com;
-        img-src 'self' data: https: blob:;
-        font-src 'self' data:;
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' 'unsafe-eval'
+        https://cdn.tailwindcss.com
+        https://alcdn.msauth.net;
+    connect-src 'self'
+        https://api.commoditic.com
+        https://commodities-api.com
+        https://api.apitube.io
+        https://api.stlouisfed.org
+        https://login.microsoftonline.com
+        https://graph.microsoft.com
+        https://func-majormetals-crm.azurewebsites.net
+        https://func-majormetals-crm-apim2.azure-api.net;
+    frame-src 
+        https://outlook.office365.com
+        https://outlook.office.com;
+    style-src 'self' 'unsafe-inline'
+        https://cdn.tailwindcss.com;
+    img-src 'self' data: https: blob:;
+    font-src 'self' data:;
 ">
 
     <script src="https://cdn.tailwindcss.com"></script>
