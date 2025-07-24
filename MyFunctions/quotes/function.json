@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
     "bindings": [
         {
             "authLevel": "anonymous",
@@ -19,21 +18,4 @@
             "name": "res"
         }
     ]
-=======
-  "bindings": [
-    {
-      "authLevel": "anonymous",
-      "type": "httpTrigger",
-      "direction": "in",
-      "name": "req",
-      "methods": ["get", "post", "options"],
-      "route": "quotes"
-    },
-    {
-      "type": "http",
-      "direction": "out",
-      "name": "res"
-    }
-  ]
->>>>>>> bd30b16b9ceabb50b84bef045bf7e2eccfb2a4c7
 }
